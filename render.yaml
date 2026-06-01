@@ -1,0 +1,101 @@
+services:
+  # ── FastAPI Web Service ──────────────────────────────────────────────────────
+  - type: web
+    name: kundliai-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: kundliai-redis
+          type: redis
+          property: connectionString
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_PLAN_ID_MONTHLY
+        sync: false
+      - key: META_WHATSAPP_TOKEN
+        sync: false
+      - key: META_PHONE_NUMBER_ID
+        sync: false
+      - key: META_TEMPLATE_DAILY_EN
+        value: daily_horoscope_en
+      - key: META_TEMPLATE_DAILY_HI
+        value: daily_horoscope_hi
+      - key: GOOGLE_GEOCODING_API_KEY
+        sync: false
+      - key: META_WEBHOOK_VERIFY_TOKEN
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: ADMIN_API_KEY
+        sync: false
+
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  - type: worker
+    name: kundliai-worker
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    startCommand: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: kundliai-redis
+          type: redis
+          property: connectionString
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_GEOCODING_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+
+  # ── Celery Beat (scheduler) ──────────────────────────────────────────────────
+  - type: worker
+    name: kundliai-beat
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    startCommand: celery -A app.tasks.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          name: kundliai-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  - type: redis
+    name: kundliai-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
