@@ -16,10 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Non-root user
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
+RUN chmod +x ./start.sh && adduser --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
 EXPOSE 8000
-COPY start.sh ./start.sh
-RUN chmod +x ./start.sh
 CMD ["./start.sh"]
