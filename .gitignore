@@ -1,0 +1,38 @@
+# Python / Backend
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/celerybeat-schedule
+backend/celerybeat-schedule.db
+backend/.venv/
+backend/venv/
+
+# Flutter / Mobile
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/pubspec.lock
+mobile/**/*.g.dart
+
+# Android build artifacts
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/android/app/debug.keystore
+mobile/android/app/release.keystore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Design/assets (large binary files)
+ActualScreens/
+Initial Screens/
+MockupAndWorkflow/

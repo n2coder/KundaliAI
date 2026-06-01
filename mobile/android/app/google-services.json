@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "99204674927",
+    "project_id": "astro-cd751",
+    "storage_bucket": "astro-cd751.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:99204674927:android:a37f39c386d8cfa4fd649a",
+        "android_client_info": {
+          "package_name": "com.kundliai.kundliai_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhYKRrDLuONeq7t_vWyDQi_9obGHUSfr4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

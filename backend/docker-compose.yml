@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  # ── FastAPI application ──────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+
+  # ── Celery worker (async tasks: chart calc, AI calls) ───────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    env_file: .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+
+  # ── Celery Beat (scheduled jobs: nightly batch, WhatsApp, scores) ───────
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    env_file: .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+
+  # ── Redis (Celery broker + result backend) ───────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
