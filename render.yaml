@@ -5,7 +5,6 @@ services:
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
@@ -53,8 +52,7 @@ services:
     name: kundliai-worker
     runtime: docker
     rootDir: backend
-    dockerfilePath: ./Dockerfile
-    startCommand: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
+    dockerfilePath: ./Dockerfile.worker
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -79,8 +77,7 @@ services:
     name: kundliai-beat
     runtime: docker
     rootDir: backend
-    dockerfilePath: ./Dockerfile
-    startCommand: celery -A app.tasks.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
+    dockerfilePath: ./Dockerfile.beat
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -99,3 +96,4 @@ services:
     name: kundliai-redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
