@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Run DB migrations on every startup (safe — skips already-applied)
+alembic upgrade head
+
 # Start Celery worker in background
 celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2 &
 
