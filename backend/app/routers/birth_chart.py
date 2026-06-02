@@ -120,15 +120,23 @@ async def submit_birth_details(
     current_user.birth_lng = lng
     await db.commit()
 
-    # Enqueue Celery task
-    compute_chart_for_user.delay(str(current_user.id))
-
+    # Enqueue Celery task — non-fatal if broker is unavailable
     already_had = current_user.birth_chart is not None
+    try:
+        compute_chart_for_user.delay(str(current_user.id))
+        queued = True
+    except Exception:
+        queued = False
+
     return ComputeResponse(
-        status="enqueued",
-        message="Birth details saved. Chart computation has been queued."
-        if not already_had
-        else "Birth details updated. Chart is being recomputed.",
+        status="enqueued" if queued else "saved",
+        message=(
+            "Birth details saved. Chart computation has been queued."
+            if queued and not already_had
+            else "Birth details updated. Chart is being recomputed."
+            if queued
+            else "Birth details saved. Chart will be computed shortly."
+        ),
     )
 
 

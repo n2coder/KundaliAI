@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,20 +20,31 @@ class BirthDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
-  final _nameCtrl  = TextEditingController();
-  final _placeCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   DateTime? _dob;
   TimeOfDay? _tob;
-  double? _lat;
-  double? _lng;
-  bool _geocoding = false;
   bool _submitting = false;
-  String? _placeError;
+
+  // Preset cities for testing — bypasses geocoding entirely
+  static const _cities = [
+    ('New Delhi',      28.6139,  77.2090),
+    ('Noida',          28.5355,  77.3910),
+    ('Gurugram',       28.4595,  77.0266),
+    ('Ghaziabad',      28.6692,  77.4538),
+    ('Faridabad',      28.4089,  77.3178),
+    ('Greater Noida',  28.4744,  77.5040),
+    ('Lucknow',        26.8467,  80.9462),
+    ('Kanpur',         26.4499,  80.3319),
+    ('Agra',           27.1767,  78.0081),
+    ('Varanasi',       25.3176,  82.9739),
+    ('Prayagraj',      25.4358,  81.8463),
+    ('Meerut',         28.9845,  77.7064),
+  ];
+  String? _selectedCity;
 
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _placeCtrl.dispose();
     super.dispose();
   }
 
@@ -75,31 +87,8 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
     if (picked != null) setState(() => _tob = picked);
   }
 
-  Future<void> _geocodePlace() async {
-    final place = _placeCtrl.text.trim();
-    if (place.isEmpty) return;
-    setState(() {
-      _geocoding = true;
-      _placeError = null;
-    });
-    try {
-      final repo = ref.read(birthChartRepoProvider);
-      final result = await repo.geocode(place);
-      setState(() {
-        _lat = result.lat;
-        _lng = result.lng;
-        _geocoding = false;
-      });
-    } catch (e) {
-      setState(() {
-        _placeError = 'Place not found. Try a different name.';
-        _geocoding = false;
-      });
-    }
-  }
-
   Future<void> _submit() async {
-    if (_dob == null || _tob == null || _placeCtrl.text.trim().isEmpty) return;
+    if (_dob == null || _tob == null || _selectedCity == null) return;
     setState(() => _submitting = true);
 
     // Web preview — skip real API and go straight to home
@@ -110,6 +99,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
     }
 
     try {
+      final city = _cities.firstWhere((c) => c.$1 == _selectedCity!);
       final repo = ref.read(birthChartRepoProvider);
       final dobStr = DateFormat('yyyy-MM-dd').format(_dob!);
       final h = _tob!.hour.toString().padLeft(2, '0');
@@ -119,9 +109,9 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
         name: _nameCtrl.text.trim().isEmpty ? null : _nameCtrl.text.trim(),
         dob: dobStr,
         tob: tobStr,
-        birthPlace: _placeCtrl.text.trim(),
-        birthLat: _lat,
-        birthLng: _lng,
+        birthPlace: city.$1,
+        birthLat: city.$2,
+        birthLng: city.$3,
       );
       final authRepo = ref.read(authRepoProvider);
       final updatedUser = await authRepo.getMe();
@@ -129,12 +119,14 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
       if (mounted) context.go('/home');
     } catch (e) {
       setState(() => _submitting = false);
+      String msg = 'Failed to save birth details.';
+      if (e is DioException) {
+        final detail = (e.response?.data as Map?)?['detail']?.toString();
+        msg = detail ?? 'Error ${e.response?.statusCode}: ${e.message}';
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to save birth details. Please try again.'),
-            backgroundColor: AppColors.error,
-          ),
+          SnackBar(content: Text(msg), backgroundColor: AppColors.error),
         );
       }
     }
@@ -143,7 +135,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final canSubmit = _nameCtrl.text.trim().isNotEmpty &&
-        _dob != null && _tob != null && _placeCtrl.text.trim().isNotEmpty;
+        _dob != null && _tob != null && _selectedCity != null;
 
     return CosmicScaffold(
       style: CosmicStyle.warm,
@@ -189,8 +181,13 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                     ],
                   ),
                 ),
-                const Spacer(),
-            Container(
+                Expanded(
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: Container(
               decoration: const BoxDecoration(
                 color: AppColors.cardBg,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -261,69 +258,50 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Place of birth
+                  // Place of birth — preset city dropdown
                   Text('Place of Birth', style: AppTextStyles.labelLarge()),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _placeCtrl,
-                          onChanged: (_) => setState(() {}),
-                          style: AppTextStyles.bodyLarge(),
-                          decoration: InputDecoration(
-                            hintText: 'e.g. Mumbai, Delhi',
-                            hintStyle: AppTextStyles.bodyMedium(
-                                color: AppColors.cosmicTextLight),
-                            prefixIcon: const Icon(Icons.location_on_outlined,
-                                color: AppColors.cosmicGold, size: 20),
-                            errorText: _placeError,
-                            filled: true,
-                            fillColor: AppColors.cardBgAlt,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  const BorderSide(color: AppColors.cardBorder),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide:
-                                  const BorderSide(color: AppColors.cardBorder),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: AppColors.cosmicGold, width: 1.5),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 14),
-                          ),
-                          onSubmitted: (_) => _geocodePlace(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _GeoButton(
-                        loading: _geocoding,
-                        confirmed: _lat != null,
-                        onTap: _geocodePlace,
-                      ),
-                    ],
-                  ),
-                  if (_lat != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
+                  DropdownButtonFormField<String>(
+                    value: _selectedCity,
+                    hint: Row(
                       children: [
-                        const Icon(Icons.check_circle_outline,
-                            size: 14, color: AppColors.scoreCareer),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Location confirmed — ${_lat!.toStringAsFixed(2)}°, ${_lng!.toStringAsFixed(2)}°',
-                          style: AppTextStyles.bodySmall(
-                              color: AppColors.scoreCareer),
-                        ),
+                        const Icon(Icons.location_on_outlined,
+                            color: AppColors.cosmicGold, size: 20),
+                        const SizedBox(width: 10),
+                        Text('Select city',
+                            style: AppTextStyles.bodyMedium(
+                                color: AppColors.cosmicTextLight)),
                       ],
                     ),
-                  ],
+                    dropdownColor: AppColors.featureDark,
+                    style: AppTextStyles.bodyLarge(),
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.cosmicGold),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.cardBgAlt,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.cardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.cardBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                            color: AppColors.cosmicGold, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                    ),
+                    items: _cities.map((c) => DropdownMenuItem(
+                      value: c.$1,
+                      child: Text(c.$1, style: AppTextStyles.bodyLarge()),
+                    )).toList(),
+                    onChanged: (v) => setState(() => _selectedCity = v),
+                  ),
                   const SizedBox(height: 24),
 
                   SizedBox(
@@ -361,6 +339,8 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                 ],
               ),
             ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -406,39 +386,3 @@ class _PickerTile extends StatelessWidget {
   }
 }
 
-class _GeoButton extends StatelessWidget {
-  const _GeoButton({
-    required this.loading,
-    required this.confirmed,
-    required this.onTap,
-  });
-  final bool loading;
-  final bool confirmed;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: loading ? null : onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: confirmed ? AppColors.scoreCareer.withOpacity(0.15) : AppColors.btnBg,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: loading
-            ? const Padding(
-                padding: EdgeInsets.all(12),
-                child: CircularProgressIndicator(
-                    strokeWidth: 2, color: AppColors.cosmicGoldLight),
-              )
-            : Icon(
-                confirmed ? Icons.check : Icons.search,
-                color: confirmed ? AppColors.scoreCareer : AppColors.cosmicGoldLight,
-                size: 22,
-              ),
-      ),
-    );
-  }
-}

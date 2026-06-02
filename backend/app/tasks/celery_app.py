@@ -1,3 +1,4 @@
+import ssl
 from celery import Celery
 from celery.schedules import crontab
 from ..config import settings
@@ -15,6 +16,12 @@ celery_app = Celery(
     ],
 )
 
+_ssl_conf = (
+    {"ssl_cert_reqs": ssl.CERT_NONE}
+    if settings.redis_url.startswith("rediss://")
+    else {}
+)
+
 celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",
@@ -22,6 +29,8 @@ celery_app.conf.update(
     timezone="Asia/Kolkata",
     enable_utc=True,
     task_track_started=True,
+    broker_use_ssl=_ssl_conf or None,
+    redis_backend_use_ssl=_ssl_conf or None,
 )
 
 celery_app.conf.beat_schedule = {

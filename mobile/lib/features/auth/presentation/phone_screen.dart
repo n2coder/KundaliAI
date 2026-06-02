@@ -254,7 +254,26 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                             color: AppColors.cosmicGold)),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                // DEV shortcut — tap to auto-fill test number
+                // Setup: Firebase Console → Auth → Sign-in method → Phone
+                //        → Test phone numbers → add +91 9000000000 / OTP: 000000
+                GestureDetector(
+                  onTap: () {
+                    _controller.text = '9000000000';
+                    _continue();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.cosmicGold.withOpacity(0.4)),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text('⚡ Dev Login  (9000000000 / OTP: 000000)',
+                        style: AppTextStyles.bodySmall(color: AppColors.cosmicGoldLight)),
+                  ),
+                ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
