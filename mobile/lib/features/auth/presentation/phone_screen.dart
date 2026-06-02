@@ -63,10 +63,11 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
         }
       },
       verificationFailed: (FirebaseAuthException e) {
+        debugPrint('verifyPhoneNumber FAILED: code=${e.code} message=${e.message}');
         if (mounted) {
           setState(() {
             _loading = false;
-            _error = e.message ?? 'Verification failed';
+            _error = '[${e.code}] ${e.message ?? 'Verification failed'}';
           });
         }
       },

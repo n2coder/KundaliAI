@@ -101,9 +101,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
         },
       );
     } on FirebaseAuthException catch (e) {
+      debugPrint('signInWithCredential FAILED: code=${e.code} message=${e.message}');
       setState(() {
         _loading = false;
-        _error = e.message ?? 'Invalid OTP';
+        _error = '[${e.code}] ${e.message ?? 'Invalid OTP'}';
       });
       _streamCtrl.add(ErrorAnimationType.shake);
     } catch (e) {
