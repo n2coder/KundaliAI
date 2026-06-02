@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -119,7 +121,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
       if (mounted) context.go('/home');
     } catch (e) {
       setState(() => _submitting = false);
-      String msg = 'Failed to save birth details.';
+      String msg = AppStrings.tr('save_failed', ref.read(langProvider));
       if (e is DioException) {
         final detail = (e.response?.data as Map?)?['detail']?.toString();
         msg = detail ?? 'Error ${e.response?.statusCode}: ${e.message}';
@@ -134,6 +136,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(langProvider);
     final canSubmit = _nameCtrl.text.trim().isNotEmpty &&
         _dob != null && _tob != null && _selectedCity != null;
 
@@ -165,7 +168,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                       const CosmicStarBadge(size: 52),
                       const SizedBox(height: 20),
                       Text(
-                        'Your Birth Details',
+                        AppStrings.tr('your_birth_details', lang),
                         textAlign: TextAlign.center,
                         style: AppTextStyles.displayMedium(
                             color: AppColors.cosmicGoldGlow),
@@ -174,7 +177,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                       const CosmicDivider(),
                       const SizedBox(height: 8),
                       Text(
-                        'For your personalised Vedic chart',
+                        AppStrings.tr('for_personalised_chart', lang),
                         style: AppTextStyles.bodyMedium(
                             color: AppColors.cosmicGoldLight),
                       ),
@@ -198,7 +201,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Full name
-                  Text('Full Name', style: AppTextStyles.labelLarge()),
+                  Text(AppStrings.tr('full_name', lang), style: AppTextStyles.labelLarge()),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _nameCtrl,
@@ -206,7 +209,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                     style: AppTextStyles.bodyLarge(),
                     textCapitalization: TextCapitalization.words,
                     decoration: InputDecoration(
-                      hintText: 'Enter your full name',
+                      hintText: AppStrings.tr('enter_full_name', lang),
                       hintStyle: AppTextStyles.bodyMedium(
                           color: AppColors.cosmicTextLight),
                       prefixIcon: const Icon(Icons.person_outline,
@@ -235,31 +238,31 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                   const SizedBox(height: 16),
 
                   // Date of birth
-                  Text('Date of Birth', style: AppTextStyles.labelLarge()),
+                  Text(AppStrings.tr('dob', lang), style: AppTextStyles.labelLarge()),
                   const SizedBox(height: 8),
                   _PickerTile(
                     icon: Icons.calendar_today_outlined,
                     label: _dob == null
-                        ? 'Select date'
+                        ? AppStrings.tr('select_date', lang)
                         : DateFormat('dd MMMM yyyy').format(_dob!),
                     onTap: _pickDate,
                   ),
                   const SizedBox(height: 16),
 
                   // Time of birth
-                  Text('Time of Birth', style: AppTextStyles.labelLarge()),
+                  Text(AppStrings.tr('tob', lang), style: AppTextStyles.labelLarge()),
                   const SizedBox(height: 8),
                   _PickerTile(
                     icon: Icons.access_time,
                     label: _tob == null
-                        ? 'Select time'
+                        ? AppStrings.tr('select_time', lang)
                         : _tob!.format(context),
                     onTap: _pickTime,
                   ),
                   const SizedBox(height: 16),
 
                   // Place of birth — preset city dropdown
-                  Text('Place of Birth', style: AppTextStyles.labelLarge()),
+                  Text(AppStrings.tr('place_of_birth', lang), style: AppTextStyles.labelLarge()),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _selectedCity,
@@ -268,7 +271,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                         const Icon(Icons.location_on_outlined,
                             color: AppColors.cosmicGold, size: 20),
                         const SizedBox(width: 10),
-                        Text('Select city',
+                        Text(AppStrings.tr('select_city', lang),
                             style: AppTextStyles.bodyMedium(
                                 color: AppColors.cosmicTextLight)),
                       ],
@@ -326,7 +329,7 @@ class _BirthDetailsScreenState extends ConsumerState<BirthDetailsScreen> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('Generate My Chart',
+                                Text(AppStrings.tr('generate_my_chart', lang),
                                     style: AppTextStyles.buttonText(
                                         color: AppColors.cosmicGoldLight)),
                                 const SizedBox(width: 8),

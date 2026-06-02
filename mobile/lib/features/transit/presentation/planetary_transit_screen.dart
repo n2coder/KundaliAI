@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/transit_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -76,6 +78,7 @@ class _PlanetaryTransitScreenState
   @override
   Widget build(BuildContext context) {
     final transitsAsync = ref.watch(transitsProvider);
+    final lang = ref.watch(langProvider);
 
     return CosmicScaffold(
       child: SafeArea(
@@ -88,17 +91,19 @@ class _PlanetaryTransitScreenState
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
                       child: Column(
                         children: [
-                          Text('Planetary Transits',
-                              style: AppTextStyles.headingMedium()),
-                          Text('Active • 2024–2025',
-                              style: AppTextStyles.bodySmall()),
+                          Text(AppStrings.tr('planetary_transits_title', lang),
+                              style: AppTextStyles.headingMedium(
+                                  color: AppColors.white)),
+                          Text(AppStrings.tr('active_2024_2025', lang),
+                              style: AppTextStyles.bodySmall(
+                                  color: AppColors.white.withOpacity(0.7))),
                         ],
                       ),
                     ),
@@ -147,7 +152,7 @@ class _PlanetaryTransitScreenState
   }
 }
 
-class _TransitList extends StatelessWidget {
+class _TransitList extends ConsumerWidget {
   const _TransitList({
     required this.transits,
     required this.expanded,
@@ -158,7 +163,8 @@ class _TransitList extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: transits.length,
@@ -262,7 +268,7 @@ class _TransitList extends StatelessWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: () => context.go('/chat'),
+                        onPressed: () => context.push('/chat'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.btnBg,
                           padding: const EdgeInsets.symmetric(
@@ -273,7 +279,8 @@ class _TransitList extends StatelessWidget {
                         icon: const Icon(Icons.auto_awesome,
                             color: AppColors.cosmicGold, size: 14),
                         label: Text(
-                            'ASK AI ABOUT ${t.planet.toUpperCase()}',
+                            AppStrings.tr('ask_ai_about', lang)
+                                .replaceFirst('{planet}', t.planet.toUpperCase()),
                             style: AppTextStyles.sectionCaps(
                                 color: AppColors.btnText)),
                       ),

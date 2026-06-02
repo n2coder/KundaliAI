@@ -3,10 +3,12 @@ from celery import Celery
 from celery.schedules import crontab
 from ..config import settings
 
+# No result backend: we never call .get() on a task result, and on a
+# per-command-billed broker (Upstash) storing + expiring every result is
+# pure waste. Fire-and-forget only.
 celery_app = Celery(
     "kundliai",
     broker=settings.celery_broker_url,
-    backend=settings.celery_result_backend,
     include=[
         "app.tasks.horoscope_batch",
         "app.tasks.insight_batch",
@@ -24,13 +26,25 @@ _ssl_conf = (
 
 celery_app.conf.update(
     task_serializer="json",
-    result_serializer="json",
     accept_content=["json"],
     timezone="Asia/Kolkata",
     enable_utc=True,
-    task_track_started=True,
     broker_use_ssl=_ssl_conf or None,
-    redis_backend_use_ssl=_ssl_conf or None,
+
+    # ── Upstash command-budget controls ──────────────────────────────────────
+    # Don't store results (no .get() anywhere) — avoids SET/EXPIRE per task.
+    task_ignore_result=True,
+    # Disable the pidbox control mailbox — kills its ~1 cmd/s idle poll.
+    worker_enable_remote_control=False,
+    # Disable task event publishing (gossip/monitoring chatter).
+    worker_send_task_events=False,
+    # Poll the broker less aggressively when idle. Tasks are scheduled/async
+    # (chart compute is fetched via polling GET /birth-chart), so a few extra
+    # seconds of pickup latency is fine and cuts idle BRPOP commands sharply.
+    broker_transport_options={
+        "visibility_timeout": 3600,
+        "polling_interval": 5.0,
+    },
 )
 
 celery_app.conf.beat_schedule = {

@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..models import User
+from ..services import chart_service
+from ..services.chart_service import with_current_dasha
 from ..services.geocode_service import geocode
-from ..tasks.chart_compute import compute_chart_for_user
 
 router = APIRouter()
 
@@ -120,22 +121,21 @@ async def submit_birth_details(
     current_user.birth_lng = lng
     await db.commit()
 
-    # Enqueue Celery task — non-fatal if broker is unavailable
     already_had = current_user.birth_chart is not None
-    try:
-        compute_chart_for_user.delay(str(current_user.id))
-        queued = True
-    except Exception:
-        queued = False
+
+    # Compute the chart synchronously (pyswisseph is fast — milliseconds) so the
+    # chart always exists immediately, with no dependency on a running Celery
+    # worker. This is what makes scores/horoscopes actually personalised.
+    await chart_service.compute_and_store_chart(
+        current_user, body.dob, body.tob, lat, lng, db
+    )
 
     return ComputeResponse(
-        status="enqueued" if queued else "saved",
+        status="computed",
         message=(
-            "Birth details saved. Chart computation has been queued."
-            if queued and not already_had
-            else "Birth details updated. Chart is being recomputed."
-            if queued
-            else "Birth details saved. Chart will be computed shortly."
+            "Birth chart updated."
+            if already_had
+            else "Birth chart computed. Your readings are now personalised."
         ),
     )
 
@@ -151,4 +151,5 @@ async def get_birth_chart(current_user: User = Depends(get_current_user)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Birth chart not yet computed. POST /birth-chart/compute first.",
         )
-    return BirthChartOut(**current_user.birth_chart.chart_data)
+    chart = with_current_dasha(current_user.birth_chart.chart_data, current_user.dob)
+    return BirthChartOut(**chart)

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -82,14 +84,30 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(langProvider);
     return Scaffold(
       backgroundColor: Colors.black,
       resizeToAvoidBottomInset: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Full-screen background image
-          Image.asset('assets/images/phone_bg.jpeg', fit: BoxFit.cover),
+          // Shared cosmic background artwork
+          Image.asset('assets/images/background.png', fit: BoxFit.cover),
+          // Contrast scrim — keeps the footer text readable over the art
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x4D000000),
+                  Color(0x66000000),
+                  Color(0x80000000),
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
 
           // Form overlay — floats in the lower portion
           SafeArea(
@@ -115,7 +133,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Mobile Number', style: AppTextStyles.labelLarge()),
+                      Text(AppStrings.tr('mobile_number', lang), style: AppTextStyles.labelLarge()),
                       const SizedBox(height: 10),
                       Row(
                         children: [
@@ -153,7 +171,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                               maxLength: 10,
                               style: AppTextStyles.bodyLarge(),
                               decoration: InputDecoration(
-                                hintText: 'Enter your mobile number',
+                                hintText: AppStrings.tr('enter_mobile', lang),
                                 hintStyle: AppTextStyles.bodyMedium(
                                     color: AppColors.cosmicTextLight),
                                 counterText: '',
@@ -211,7 +229,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text('Continue',
+                                    Text(AppStrings.tr('continue_btn', lang),
                                         style: AppTextStyles.buttonText(
                                             color: AppColors.cosmicGoldLight)),
                                     const SizedBox(width: 8),
@@ -230,9 +248,9 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                           const Icon(Icons.shield_outlined,
                               size: 13, color: AppColors.cosmicTextLight),
                           const SizedBox(width: 5),
-                          Text('Your number is safe with us. ',
+                          Text(AppStrings.tr('number_safe', lang),
                               style: AppTextStyles.bodySmall()),
-                          Text('We never share your data.',
+                          Text(AppStrings.tr('never_share', lang),
                               style: AppTextStyles.bodySmall(
                                   color: AppColors.cosmicGold)),
                         ],
@@ -249,7 +267,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                     const Icon(Icons.lock_outline,
                         size: 12, color: AppColors.cosmicGold),
                     const SizedBox(width: 5),
-                    Text('Secured by 256-bit encryption',
+                    Text(AppStrings.tr('secured_256', lang),
                         style: AppTextStyles.bodySmall(
                             color: AppColors.cosmicGold)),
                   ],

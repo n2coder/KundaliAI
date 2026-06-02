@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/cosmic_scaffold.dart';
@@ -42,14 +45,14 @@ class _RemedyItem {
 const _categories = ['All', 'Mantras', 'Crystals', 'Rituals', 'Therapy'];
 
 /// All Remedies — full catalog with category filter.
-class AllRemediesScreen extends StatefulWidget {
+class AllRemediesScreen extends ConsumerStatefulWidget {
   const AllRemediesScreen({super.key});
 
   @override
-  State<AllRemediesScreen> createState() => _AllRemediesScreenState();
+  ConsumerState<AllRemediesScreen> createState() => _AllRemediesScreenState();
 }
 
-class _AllRemediesScreenState extends State<AllRemediesScreen> {
+class _AllRemediesScreenState extends ConsumerState<AllRemediesScreen> {
   int _cat = 0;
 
   List<_RemedyItem> get _filtered => _cat == 0
@@ -60,6 +63,7 @@ class _AllRemediesScreenState extends State<AllRemediesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(langProvider);
     return CosmicScaffold(
       child: SafeArea(
         child: Column(
@@ -71,13 +75,14 @@ class _AllRemediesScreenState extends State<AllRemediesScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text('All Remedies',
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('all_remedies_title', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   const SizedBox(width: 48),

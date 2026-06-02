@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/remedy_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -14,6 +16,7 @@ class RemediesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final remediesAsync = ref.watch(remediesProvider);
+    final lang = ref.watch(langProvider);
 
     return CosmicScaffold(
       child: SafeArea(
@@ -25,13 +28,14 @@ class RemediesScreen extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text('Remedies',
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('remedies_title', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   const SizedBox(width: 48),
@@ -54,7 +58,7 @@ class RemediesScreen extends ConsumerWidget {
                             color: AppColors.cosmicTextLight, size: 48),
                         const SizedBox(height: 12),
                         Text(
-                          'Could not load remedies.\nPlease try again.',
+                          AppStrings.tr('remedies_load_error', lang),
                           textAlign: TextAlign.center,
                           style: AppTextStyles.bodyMedium(
                               color: AppColors.cosmicTextMid),
@@ -80,13 +84,13 @@ class RemediesScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () => context.go('/remedies/all'),
+                  onPressed: () => context.push('/remedies/all'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.btnBg,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text('VIEW ALL REMEDIES',
+                  child: Text(AppStrings.tr('view_all_remedies', lang),
                       style: AppTextStyles.sectionCaps(
                           color: AppColors.btnText)),
                 ),
@@ -99,11 +103,12 @@ class RemediesScreen extends ConsumerWidget {
   }
 }
 
-class _RemediesBanner extends StatelessWidget {
+class _RemediesBanner extends ConsumerWidget {
   const _RemediesBanner();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return Container(
       height: 140,
       decoration: BoxDecoration(
@@ -127,13 +132,13 @@ class _RemediesBanner extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Personalized\nRemedies for You',
+                  AppStrings.tr('remedies_banner_title', lang),
                   style: AppTextStyles.headingMedium(
                       color: AppColors.cosmicGoldLight),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Simple practices with powerful\nplanetary benefits.',
+                  AppStrings.tr('remedies_banner_sub', lang),
                   style: AppTextStyles.bodySmall(
                       color: AppColors.white.withOpacity(0.72)),
                 ),

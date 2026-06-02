@@ -17,4 +17,8 @@ COPY . .
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-CMD ["celery", "-A", "app.tasks.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+# --without-gossip/-mingle/-heartbeat stop inter-worker Redis pub/sub chatter
+# (useless with a single worker) and are the biggest idle command savers.
+CMD ["celery", "-A", "app.tasks.celery_app", "worker", \
+     "--loglevel=info", "--concurrency=2", \
+     "--without-gossip", "--without-mingle", "--without-heartbeat"]

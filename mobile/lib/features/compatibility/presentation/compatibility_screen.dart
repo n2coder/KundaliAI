@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/compatibility_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -90,7 +92,10 @@ class _CompatibilityScreenState extends ConsumerState<CompatibilityScreen> {
               );
       if (mounted) setState(() => _result = result);
     } catch (e) {
-      if (mounted) setState(() => _error = 'Failed to check compatibility. Please try again.');
+      if (mounted) {
+        setState(() =>
+            _error = AppStrings.tr('compat_failed', ref.read(langProvider)));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -98,6 +103,7 @@ class _CompatibilityScreenState extends ConsumerState<CompatibilityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(langProvider);
     return CosmicScaffold(
       child: SafeArea(
         child: Column(
@@ -109,13 +115,14 @@ class _CompatibilityScreenState extends ConsumerState<CompatibilityScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text('Compatibility',
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('compatibility_title', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   if (_result != null)
@@ -124,7 +131,7 @@ class _CompatibilityScreenState extends ConsumerState<CompatibilityScreen> {
                         _result = null;
                         _error = null;
                       }),
-                      child: Text('Reset',
+                      child: Text(AppStrings.tr('reset', lang),
                           style: AppTextStyles.bodySmall(
                               color: AppColors.cosmicGold)),
                     )
@@ -161,7 +168,7 @@ class _CompatibilityScreenState extends ConsumerState<CompatibilityScreen> {
 
 // ── Form view ─────────────────────────────────────────────────────────────────
 
-class _FormView extends StatelessWidget {
+class _FormView extends ConsumerWidget {
   const _FormView({
     required this.partnerDob,
     required this.partnerTob,
@@ -183,7 +190,8 @@ class _FormView extends StatelessWidget {
   final VoidCallback onCheck;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final canCheck = partnerDob != null &&
         partnerTob != null &&
         placeCtrl.text.trim().isNotEmpty;
@@ -216,17 +224,17 @@ class _FormView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('Check Compatibility',
+                Text(AppStrings.tr('check_compatibility_title', lang),
                     style: AppTextStyles.headingLarge()),
                 const SizedBox(height: 4),
-                Text("Enter your partner's birth details",
+                Text(AppStrings.tr('enter_partner_details', lang),
                     style: AppTextStyles.bodySmall()),
               ],
             ),
           ),
           const SizedBox(height: 28),
 
-          Text("PARTNER'S BIRTH DETAILS",
+          Text(AppStrings.tr('partner_birth_details', lang),
               style: AppTextStyles.sectionCaps()),
           const SizedBox(height: 12),
 
@@ -235,37 +243,37 @@ class _FormView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Date of Birth',
+                Text(AppStrings.tr('dob', lang),
                     style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 8),
                 _PickerTile(
                   icon: Icons.calendar_today_outlined,
                   label: partnerDob == null
-                      ? 'Select date'
+                      ? AppStrings.tr('select_date', lang)
                       : DateFormat('dd MMMM yyyy').format(partnerDob!),
                   onTap: onPickDate,
                 ),
                 const SizedBox(height: 16),
 
-                Text('Time of Birth',
+                Text(AppStrings.tr('tob', lang),
                     style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 8),
                 _PickerTile(
                   icon: Icons.access_time,
                   label: partnerTob == null
-                      ? 'Select time'
+                      ? AppStrings.tr('select_time', lang)
                       : partnerTob!.format(context),
                   onTap: onPickTime,
                 ),
                 const SizedBox(height: 16),
 
-                Text('Birth Place', style: AppTextStyles.labelLarge()),
+                Text(AppStrings.tr('birth_place', lang), style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 8),
                 TextField(
                   controller: placeCtrl,
                   style: AppTextStyles.bodyLarge(),
                   decoration: InputDecoration(
-                    hintText: 'e.g. Mumbai, Delhi',
+                    hintText: AppStrings.tr('place_hint', lang),
                     hintStyle: AppTextStyles.bodyMedium(
                         color: AppColors.cosmicTextLight),
                     prefixIcon: const Icon(Icons.location_on_outlined,
@@ -325,7 +333,9 @@ class _FormView extends StatelessWidget {
                   : const Icon(Icons.favorite,
                       color: AppColors.scoreLove, size: 18),
               label: Text(
-                loading ? 'Checking...' : 'CHECK COMPATIBILITY',
+                loading
+                    ? AppStrings.tr('checking', lang)
+                    : AppStrings.tr('check_compatibility_btn', lang),
                 style: AppTextStyles.buttonText(
                     color: AppColors.cosmicGoldLight),
               ),
@@ -340,7 +350,7 @@ class _FormView extends StatelessWidget {
 
 // ── Result view ───────────────────────────────────────────────────────────────
 
-class _ResultView extends StatelessWidget {
+class _ResultView extends ConsumerWidget {
   const _ResultView({
     required this.result,
     required this.partnerDob,
@@ -352,7 +362,8 @@ class _ResultView extends StatelessWidget {
   final String partnerPlace;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -372,7 +383,7 @@ class _ResultView extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text('COMPATIBILITY SCORE',
+                Text(AppStrings.tr('compatibility_score', lang),
                     style: AppTextStyles.sectionCaps(
                         color: AppColors.cosmicGoldLight)),
                 const SizedBox(height: 20),
@@ -399,7 +410,7 @@ class _ResultView extends StatelessWidget {
                             style: AppTextStyles.headingLarge(
                                 color: AppColors.cosmicGoldLight),
                           ),
-                          Text('Match',
+                          Text(AppStrings.tr('match', lang),
                               style: AppTextStyles.bodySmall(
                                   color:
                                       AppColors.white.withOpacity(0.6))),
@@ -430,19 +441,19 @@ class _ResultView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _ScoreItem(
-                  label: 'Love',
+                  label: AppStrings.tr('score_love', lang),
                   value: result.loveScore,
                   color: AppColors.scoreLove),
               _ScoreItem(
-                  label: 'Career',
+                  label: AppStrings.tr('score_career', lang),
                   value: result.careerScore,
                   color: AppColors.scoreCareer),
               _ScoreItem(
-                  label: 'Talk',
+                  label: AppStrings.tr('score_talk', lang),
                   value: result.communicationScore,
                   color: AppColors.scoreHealth),
               _ScoreItem(
-                  label: 'Trust',
+                  label: AppStrings.tr('score_trust', lang),
                   value: result.trustScore,
                   color: AppColors.scoreMoney),
             ],
@@ -455,7 +466,7 @@ class _ResultView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Compatibility Summary',
+                Text(AppStrings.tr('compatibility_summary', lang),
                     style: AppTextStyles.labelLarge(
                         color: AppColors.cosmicGold)),
                 const SizedBox(height: 10),
@@ -472,14 +483,14 @@ class _ResultView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Strengths',
+                Text(AppStrings.tr('strengths', lang),
                     style: AppTextStyles.labelLarge(
                         color: AppColors.scoreCareer)),
                 const SizedBox(height: 10),
                 ...result.strengths.map((s) =>
                     _BulletRow(text: s, positive: true)),
                 const SizedBox(height: 12),
-                Text('Challenges',
+                Text(AppStrings.tr('challenges', lang),
                     style: AppTextStyles.labelLarge(
                         color: AppColors.error)),
                 const SizedBox(height: 10),
@@ -496,7 +507,7 @@ class _ResultView extends StatelessWidget {
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: () => context.go('/chat'),
+              onPressed: () => context.push('/chat'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.btnBg,
                 shape: RoundedRectangleBorder(
@@ -504,7 +515,7 @@ class _ResultView extends StatelessWidget {
               ),
               icon: const Icon(Icons.auto_awesome,
                   color: AppColors.cosmicGold, size: 18),
-              label: Text('ASK AI ABOUT YOUR COMPATIBILITY',
+              label: Text(AppStrings.tr('ask_ai_compatibility', lang),
                   style: AppTextStyles.sectionCaps(
                       color: AppColors.btnText)),
             ),

@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import User
 from ..models.birth_chart import BirthChart
 from ..models.horoscope import Horoscope, HoroscopePeriod
-from .openai_client import get_client
+from .chart_service import dasha_from_chart
+from .openai_client import chat_complete
 
 _MODEL = "gpt-4o-mini"
 
@@ -58,7 +59,7 @@ async def get_or_generate(
         if existing_content:
             return horoscope
 
-    content = await _generate(birth_chart.chart_data, period, for_date, lang)
+    content = await _generate(birth_chart.chart_data, period, for_date, lang, user.dob)
 
     if horoscope is None:
         horoscope = Horoscope(
@@ -80,9 +81,9 @@ async def get_or_generate(
 
 
 async def _generate(
-    chart_data: dict, period: HoroscopePeriod, for_date: date, lang: str
+    chart_data: dict, period: HoroscopePeriod, for_date: date, lang: str, dob: date
 ) -> str:
-    summary = _chart_summary(chart_data)
+    summary = _chart_summary(chart_data, dob)
     period_instr = _PERIOD_INSTRUCTIONS[period].format(date=for_date)
     lang_instr = _LANG_INSTRUCTION.get(lang, _LANG_INSTRUCTION["en"])
 
@@ -94,18 +95,17 @@ async def _generate(
     )
     user_msg = period_instr
 
-    resp = await get_client().chat.completions.create(
+    return await chat_complete(
+        [{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
         model=_MODEL,
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": user_msg}],
         max_tokens=700,
         temperature=0.75,
     )
-    return resp.choices[0].message.content.strip()
 
 
-def _chart_summary(chart_data: dict) -> str:
+def _chart_summary(chart_data: dict, dob: date | None = None) -> str:
     planets = {p["name"]: p["sign"] for p in chart_data.get("planets", [])}
-    dasha = chart_data.get("dasha", {})
+    dasha = dasha_from_chart(chart_data, dob)
     retro = [p["name"] for p in chart_data.get("planets", []) if p.get("retrograde")]
     retro_str = f"Retrograde: {', '.join(retro)}" if retro else ""
     return (

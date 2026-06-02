@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/insight_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -24,6 +26,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   @override
   Widget build(BuildContext context) {
     final insightsAsync = ref.watch(allInsightsProvider);
+    final lang = ref.watch(langProvider);
 
     return CosmicScaffold(
       child: Column(
@@ -39,13 +42,14 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.arrow_back_ios_new,
-                              color: AppColors.cosmicTextDark, size: 18),
+                              color: AppColors.white, size: 18),
                           onPressed: () => Navigator.of(context).maybePop(),
                         ),
                         Expanded(
                           child: Center(
-                            child: Text('Insights',
-                                style: AppTextStyles.headingMedium()),
+                            child: Text(AppStrings.tr('insights_title', lang),
+                                style: AppTextStyles.headingMedium(
+                                    color: AppColors.white)),
                           ),
                         ),
                         const SizedBox(width: 48),
@@ -59,7 +63,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       children: List.generate(
                         _tabs.length,
                         (i) => _InsightTab(
-                          label: _tabs[i],
+                          label: AppStrings.tr('score_${_categories[i]}', lang),
                           active: _tab == i,
                           onTap: () => setState(() => _tab = i),
                         ),
@@ -83,7 +87,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                                   size: 48),
                               const SizedBox(height: 12),
                               Text(
-                                'Could not load insights.',
+                                AppStrings.tr('insights_load_error', lang),
                                 style: AppTextStyles.bodyMedium(
                                     color: AppColors.cosmicTextMid),
                               ),
@@ -97,14 +101,15 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                             .where((i) => i.category == cat)
                             .firstOrNull;
                         if (insight == null) {
-                          return const Center(
-                              child: Text('No data for this category'));
+                          return Center(
+                              child: Text(
+                                  AppStrings.tr('no_category_data', lang)));
                         }
                         return _InsightBody(
                           insight: insight,
-                          tabLabel: _tabs[_tab],
+                          tabLabel: AppStrings.tr('score_${_categories[_tab]}', lang),
                           onDetail: () =>
-                              context.go('/insights/${_tabs[_tab]}'),
+                              context.push('/insights/${_tabs[_tab]}'),
                         );
                       },
                     ),
@@ -140,7 +145,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   }
 }
 
-class _InsightBody extends StatelessWidget {
+class _InsightBody extends ConsumerWidget {
   const _InsightBody({
     required this.insight,
     required this.tabLabel,
@@ -151,7 +156,8 @@ class _InsightBody extends StatelessWidget {
   final VoidCallback onDetail;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return Column(
       children: [
         Expanded(
@@ -161,7 +167,7 @@ class _InsightBody extends StatelessWidget {
               _InsightCard(insight: insight, label: tabLabel),
               const SizedBox(height: 20),
               if (insight.bestPeriods.isNotEmpty) ...[
-                Text('Best Time Periods',
+                Text(AppStrings.tr('best_time_periods', lang),
                     style: AppTextStyles.headingMedium()),
                 const SizedBox(height: 12),
                 ...insight.bestPeriods.map(
@@ -187,7 +193,7 @@ class _InsightBody extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('DETAILED ANALYSIS',
+                  Text(AppStrings.tr('detailed_analysis', lang),
                       style: AppTextStyles.sectionCaps(
                           color: AppColors.btnText)),
                   const SizedBox(width: 8),
@@ -246,13 +252,14 @@ class _InsightTab extends StatelessWidget {
   }
 }
 
-class _InsightCard extends StatelessWidget {
+class _InsightCard extends ConsumerWidget {
   const _InsightCard({required this.insight, required this.label});
   final InsightModel insight;
   final String label;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final score = insight.score;
     return Container(
       padding: const EdgeInsets.all(20),
@@ -271,7 +278,7 @@ class _InsightCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$label Outlook',
+                  Text('$label ${AppStrings.tr('outlook', lang)}',
                       style: AppTextStyles.headingMedium(
                           color: AppColors.white)),
                   Text(
@@ -318,12 +325,13 @@ class _InsightCard extends StatelessWidget {
   }
 }
 
-class _PeriodTile extends StatelessWidget {
+class _PeriodTile extends ConsumerWidget {
   const _PeriodTile({required this.label});
   final String label;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: CosmicCard(
@@ -352,7 +360,7 @@ class _PeriodTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.cardBorder),
               ),
-              child: Text('High',
+              child: Text(AppStrings.tr('high', lang),
                   style: AppTextStyles.labelSmall()),
             ),
           ],

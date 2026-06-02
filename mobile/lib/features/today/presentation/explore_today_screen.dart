@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/today_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -16,6 +18,7 @@ class ExploreTodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final today = ref.watch(todayProvider).valueOrNull;
+    final lang = ref.watch(langProvider);
     final dateLabel = today != null
         ? DateFormat('EEEE, d MMMM yyyy').format(DateTime.parse(today.date))
         : DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
@@ -31,24 +34,26 @@ class ExploreTodayScreen extends ConsumerWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
                       child: Column(
                         children: [
-                          Text("Today's Full Reading",
-                              style: AppTextStyles.headingMedium()),
+                          Text(AppStrings.tr('todays_full_reading', lang),
+                              style: AppTextStyles.headingMedium(
+                                  color: AppColors.white)),
                           Text(dateLabel,
-                              style: AppTextStyles.bodySmall()),
+                              style: AppTextStyles.bodySmall(
+                                  color: AppColors.white.withOpacity(0.7))),
                         ],
                       ),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.share_outlined,
-                        color: AppColors.cosmicTextDark),
+                        color: AppColors.white),
                     onPressed: () {},
                   ),
                 ],
@@ -99,7 +104,7 @@ class ExploreTodayScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.go('/chat'),
+                  onPressed: () => context.push('/chat'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.btnBg,
                     shape: RoundedRectangleBorder(
@@ -107,7 +112,7 @@ class ExploreTodayScreen extends ConsumerWidget {
                   ),
                   icon: const Icon(Icons.auto_awesome,
                       color: AppColors.cosmicGold, size: 18),
-                  label: Text('ASK AI FOR MORE DETAILS',
+                  label: Text(AppStrings.tr('ask_ai_more_details', lang),
                       style: AppTextStyles.sectionCaps(
                           color: AppColors.btnText)),
                 ),
@@ -122,12 +127,13 @@ class ExploreTodayScreen extends ConsumerWidget {
 
 // ── Day Score card ────────────────────────────────────────────────────────────
 
-class _DayScoreCard extends StatelessWidget {
+class _DayScoreCard extends ConsumerWidget {
   const _DayScoreCard({required this.today});
   final TodayModel? today;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final score = today?.lifeScores?.dayScore ?? 82;
     final title = today?.lifeScores?.dayTitle.isNotEmpty == true
         ? today!.lifeScores!.dayTitle
@@ -150,7 +156,7 @@ class _DayScoreCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("TODAY'S COSMIC WEATHER",
+                Text(AppStrings.tr('todays_cosmic_weather', lang),
                     style: AppTextStyles.sectionCaps(
                         color: AppColors.cosmicGoldLight)),
                 const SizedBox(height: 8),
@@ -191,7 +197,7 @@ class _DayScoreCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text('Day Score',
+              Text(AppStrings.tr('day_score', lang),
                   style: AppTextStyles.bodySmall(
                       color: AppColors.white.withOpacity(0.55))),
             ],
@@ -204,12 +210,13 @@ class _DayScoreCard extends StatelessWidget {
 
 // ── Moon Phase card ───────────────────────────────────────────────────────────
 
-class _MoonPhaseCard extends StatelessWidget {
+class _MoonPhaseCard extends ConsumerWidget {
   const _MoonPhaseCard({required this.moonPhase});
   final MoonPhaseModel? moonPhase;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final emoji = moonPhase?.emoji ?? '🌔';
     final name = moonPhase?.name ?? 'Waxing Gibbous Moon';
     final desc = moonPhase?.description ??
@@ -243,11 +250,13 @@ class _MoonPhaseCard extends StatelessWidget {
                 Row(
                   children: [
                     _PhaseBadge(
-                        label: 'Moon in $sign',
+                        label: AppStrings.tr('moon_in', lang)
+                            .replaceFirst('{sign}', sign),
                         color: AppColors.cosmicGold),
                     const SizedBox(width: 8),
                     _PhaseBadge(
-                        label: '$percent% full',
+                        label: AppStrings.tr('percent_full', lang)
+                            .replaceFirst('{p}', '$percent'),
                         color: AppColors.scoreHealth),
                   ],
                 ),
@@ -282,7 +291,7 @@ class _PhaseBadge extends StatelessWidget {
 
 // ── Auspicious Times (Muhurta) ────────────────────────────────────────────────
 
-class _MuhurtaCard extends StatelessWidget {
+class _MuhurtaCard extends ConsumerWidget {
   const _MuhurtaCard({required this.muhurtas});
   final List<MuhurtaModel>? muhurtas;
 
@@ -294,12 +303,13 @@ class _MuhurtaCard extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return CosmicCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Auspicious Times (Muhurta)',
+          Text(AppStrings.tr('auspicious_times', lang),
               style: AppTextStyles.labelLarge(
                   color: AppColors.cosmicGold)),
           const SizedBox(height: 10),
@@ -356,12 +366,13 @@ class _TimeRow extends StatelessWidget {
 
 // ── Lucky Items ───────────────────────────────────────────────────────────────
 
-class _LuckyItemsCard extends StatelessWidget {
+class _LuckyItemsCard extends ConsumerWidget {
   const _LuckyItemsCard({required this.today});
   final TodayModel? today;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final colour = today?.luckyColor ?? 'Golden';
     final number = today?.luckyNumber.toString() ?? '3';
     final gem = today?.luckyGem ?? 'Ruby';
@@ -371,18 +382,18 @@ class _LuckyItemsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Lucky for Today',
+          Text(AppStrings.tr('lucky_for_today', lang),
               style: AppTextStyles.labelLarge(
                   color: AppColors.cosmicGold)),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _LuckyItem(icon: '🎨', label: 'Colour', value: colour),
-              _LuckyItem(icon: '🔢', label: 'Number', value: number),
-              _LuckyItem(icon: '💎', label: 'Gem', value: gem),
+              _LuckyItem(icon: '🎨', label: AppStrings.tr('lucky_colour', lang), value: colour),
+              _LuckyItem(icon: '🔢', label: AppStrings.tr('lucky_number', lang), value: number),
+              _LuckyItem(icon: '💎', label: AppStrings.tr('lucky_gem', lang), value: gem),
               _LuckyItem(
-                  icon: '🧭', label: 'Direction', value: direction),
+                  icon: '🧭', label: AppStrings.tr('lucky_direction', lang), value: direction),
             ],
           ),
         ],
@@ -416,7 +427,7 @@ class _LuckyItem extends StatelessWidget {
 
 // ── Do Today / Avoid Today ────────────────────────────────────────────────────
 
-class _ActivitiesCard extends StatelessWidget {
+class _ActivitiesCard extends ConsumerWidget {
   const _ActivitiesCard(
       {required this.doToday, required this.avoidToday});
   final List<String>? doToday;
@@ -436,7 +447,8 @@ class _ActivitiesCard extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final dos = doToday?.isNotEmpty == true ? doToday! : _defaultDo;
     final avoids =
         avoidToday?.isNotEmpty == true ? avoidToday! : _defaultAvoid;
@@ -445,13 +457,13 @@ class _ActivitiesCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Do Today',
+          Text(AppStrings.tr('do_today', lang),
               style: AppTextStyles.labelLarge(
                   color: AppColors.scoreCareer)),
           const SizedBox(height: 10),
           ...dos.map((s) => _BulletItem(text: s, positive: true)),
           const SizedBox(height: 12),
-          Text('Avoid Today',
+          Text(AppStrings.tr('avoid_today', lang),
               style:
                   AppTextStyles.labelLarge(color: AppColors.error)),
           const SizedBox(height: 10),
@@ -493,7 +505,7 @@ class _BulletItem extends StatelessWidget {
 
 // ── Planetary Influences ──────────────────────────────────────────────────────
 
-class _PlanetaryInfluenceCard extends StatelessWidget {
+class _PlanetaryInfluenceCard extends ConsumerWidget {
   const _PlanetaryInfluenceCard({required this.influences});
   final List<PlanetaryInfluenceModel>? influences;
 
@@ -504,7 +516,8 @@ class _PlanetaryInfluenceCard extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final items = influences?.isNotEmpty == true
         ? influences!
             .map((i) => (glyph: i.glyph, sign: i.sign, effect: i.effect))
@@ -515,7 +528,7 @@ class _PlanetaryInfluenceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Today's Planetary Influences",
+          Text(AppStrings.tr('todays_planetary_influences', lang),
               style: AppTextStyles.labelLarge(
                   color: AppColors.cosmicGold)),
           const SizedBox(height: 12),

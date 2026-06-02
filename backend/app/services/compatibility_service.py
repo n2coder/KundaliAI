@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .chart_service import compute_vedic_chart
 from .geocode_service import geocode
-from .openai_client import get_client
+from .openai_client import chat_complete
 from ..models import User
 
 logger = logging.getLogger(__name__)
@@ -292,15 +292,13 @@ async def _generate_narrative(
     )
 
     try:
-        client = get_client()
-        resp = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
+        content = await chat_complete(
+            [{"role": "user", "content": prompt}],
             max_tokens=600,
+            temperature=0.7,
             response_format={"type": "json_object"},
         )
-        data = json.loads(resp.choices[0].message.content or "{}")
+        data = json.loads(content)
         summary    = data.get("summary", "")
         strengths  = data.get("strengths", [])[:3]
         challenges = data.get("challenges", [])[:3]

@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/birth_chart_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -51,6 +53,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
   @override
   Widget build(BuildContext context) {
     final chartAsync = ref.watch(birthChartProvider);
+    final lang = ref.watch(langProvider);
     final chartSize = MediaQuery.of(context).size.width - 56;
 
     return CosmicScaffold(
@@ -64,18 +67,19 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text('Birth Chart',
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('birth_chart_title', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.ios_share_outlined,
-                        color: AppColors.cosmicTextDark),
+                        color: AppColors.white),
                     onPressed: () {},
                   ),
                 ],
@@ -96,15 +100,15 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
                 child: Row(
                   children: [
                     _ChartTab(
-                        label: 'Chart',
+                        label: AppStrings.tr('tab_chart', lang),
                         active: _tab == 0,
                         onTap: () => setState(() => _tab = 0)),
                     _ChartTab(
-                        label: 'Planets',
+                        label: AppStrings.tr('tab_planets', lang),
                         active: _tab == 1,
                         onTap: () => setState(() => _tab = 1)),
                     _ChartTab(
-                        label: 'Houses',
+                        label: AppStrings.tr('tab_houses', lang),
                         active: _tab == 2,
                         onTap: () => setState(() => _tab = 2)),
                   ],
@@ -127,7 +131,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.go('/chat'),
+                  onPressed: () => context.push('/chat'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.featureDark,
                     shape: RoundedRectangleBorder(
@@ -137,7 +141,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
                   ),
                   icon: const Icon(Icons.auto_awesome,
                       color: AppColors.cosmicGold, size: 18),
-                  label: Text('AI INTERPRETATION',
+                  label: Text(AppStrings.tr('ai_interpretation', lang),
                       style: AppTextStyles.sectionCaps(
                           color: AppColors.cosmicGold)),
                 ),
@@ -152,6 +156,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
   Widget _chartTab(
       AsyncValue<BirthChartModel> chartAsync, double chartSize) {
     final chart = chartAsync.valueOrNull;
+    final lang = ref.read(langProvider);
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
@@ -170,23 +175,23 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Chart Summary',
+                Text(AppStrings.tr('chart_summary', lang),
                     style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 12),
                 _SummaryRow(
-                    label: 'Ascendant',
+                    label: AppStrings.tr('ascendant', lang),
                     value:
                         '${chart.ascendant} (${chart.ascendantDegree.toStringAsFixed(1)}°)'),
                 _SummaryRow(
-                    label: 'Sun Sign', value: chart.sunSign),
+                    label: AppStrings.tr('sun_sign', lang), value: chart.sunSign),
                 _SummaryRow(
-                    label: 'Moon Sign', value: chart.moonSign),
+                    label: AppStrings.tr('moon_sign', lang), value: chart.moonSign),
                 _SummaryRow(
-                    label: 'Mahadasha',
+                    label: AppStrings.tr('mahadasha', lang),
                     value:
                         '${chart.dasha.mahadasha} (${chart.dasha.mahadashaRemainingYears.toStringAsFixed(1)} yrs)'),
                 _SummaryRow(
-                    label: 'Antardasha',
+                    label: AppStrings.tr('antardasha', lang),
                     value: chart.dasha.antardasha,
                     isLast: true),
               ],
@@ -198,6 +203,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
   }
 
   Widget _planetsTab(AsyncValue<BirthChartModel> chartAsync) {
+    final lang = ref.read(langProvider);
     return chartAsync.when(
       loading: () => const Center(
           child: CircularProgressIndicator(
@@ -211,7 +217,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Planetary Positions',
+                Text(AppStrings.tr('planetary_positions', lang),
                     style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 12),
                 ..._defaultPlanets.map((p) => _StaticPlanetRow(p)),
@@ -229,7 +235,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Planetary Positions',
+                Text(AppStrings.tr('planetary_positions', lang),
                     style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 12),
                 ...chart.planets.map((p) => _LivePlanetRow(planet: p)),
@@ -243,12 +249,13 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
   }
 
   Widget _housesTab(AsyncValue<BirthChartModel> chartAsync) {
+    final lang = ref.read(langProvider);
     return chartAsync.when(
       loading: () => const Center(
           child: CircularProgressIndicator(
               color: AppColors.cosmicGold)),
       error: (_, __) => Center(
-        child: Text('Could not load house data',
+        child: Text(AppStrings.tr('could_not_load_houses', lang),
             style: AppTextStyles.bodyMedium()),
       ),
       data: (chart) => ListView(
@@ -260,7 +267,7 @@ class _BirthChartScreenState extends ConsumerState<BirthChartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('House Positions',
+                Text(AppStrings.tr('house_positions', lang),
                     style: AppTextStyles.labelLarge()),
                 const SizedBox(height: 12),
                 ...chart.houses.map((h) => _HouseRow(house: h)),
@@ -372,12 +379,13 @@ class _LivePlanetRow extends StatelessWidget {
 
 // ── House row ─────────────────────────────────────────────────────────────────
 
-class _HouseRow extends StatelessWidget {
+class _HouseRow extends ConsumerWidget {
   const _HouseRow({required this.house});
   final HouseModel house;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final signGlyph = _signGlyphs[house.sign] ?? '✦';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -399,7 +407,7 @@ class _HouseRow extends StatelessWidget {
           const SizedBox(width: 10),
           SizedBox(
               width: 68,
-              child: Text('House ${house.house}',
+              child: Text('${AppStrings.tr('house', lang)} ${house.house}',
                   style: AppTextStyles.labelMedium())),
           Text(signGlyph,
               style: const TextStyle(

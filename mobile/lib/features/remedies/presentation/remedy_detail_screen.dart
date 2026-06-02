@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/cosmic_scaffold.dart';
@@ -132,12 +135,13 @@ final remedyDataMap = <String, RemedyData>{
 };
 
 /// Remedy detail screen — shows full practice guide for a single remedy.
-class RemedyDetailScreen extends StatelessWidget {
+class RemedyDetailScreen extends ConsumerWidget {
   const RemedyDetailScreen({super.key, required this.title});
   final String title;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final data = remedyDataMap[title] ??
         RemedyData(
           icon: '✦',
@@ -163,18 +167,19 @@ class RemedyDetailScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
                       child: Text(data.title,
-                          style: AppTextStyles.headingMedium()),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.share_outlined,
-                        color: AppColors.cosmicTextDark),
+                        color: AppColors.white),
                     onPressed: () {},
                   ),
                 ],
@@ -231,12 +236,12 @@ class RemedyDetailScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _InfoChip(label: 'Planet', value: data.planet),
+                            _InfoChip(label: AppStrings.tr('planet_label', lang), value: data.planet),
                             Container(
                                 width: 0.8,
                                 height: 28,
                                 color: AppColors.cosmicGold.withOpacity(0.3)),
-                            _InfoChip(label: 'Duration', value: data.duration),
+                            _InfoChip(label: AppStrings.tr('duration', lang), value: data.duration),
                           ],
                         ),
                       ],
@@ -249,7 +254,7 @@ class RemedyDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('About This Remedy',
+                        Text(AppStrings.tr('about_this_remedy', lang),
                             style: AppTextStyles.labelLarge()),
                         const SizedBox(height: 8),
                         Text(data.description,
@@ -264,7 +269,7 @@ class RemedyDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Benefits',
+                        Text(AppStrings.tr('benefits', lang),
                             style: AppTextStyles.labelLarge(
                                 color: AppColors.cosmicGold)),
                         const SizedBox(height: 10),
@@ -293,7 +298,7 @@ class RemedyDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('How to Practice',
+                        Text(AppStrings.tr('how_to_practice', lang),
                             style: AppTextStyles.labelLarge(
                                 color: AppColors.cosmicGold)),
                         const SizedBox(height: 10),
@@ -350,7 +355,7 @@ class RemedyDetailScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Best Time',
+                              Text(AppStrings.tr('best_time', lang),
                                   style: AppTextStyles.sectionCaps(
                                       color: AppColors.cosmicGoldLight)),
                               const SizedBox(height: 4),
@@ -381,7 +386,7 @@ class RemedyDetailScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  child: Text('START PRACTICE',
+                  child: Text(AppStrings.tr('start_practice', lang),
                       style: AppTextStyles.sectionCaps(
                           color: AppColors.btnText)),
                 ),

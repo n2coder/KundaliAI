@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/cosmic_scaffold.dart';
@@ -133,15 +136,15 @@ const _insightDetails = {
 };
 
 /// Detailed insight page — full monthly breakdown + predictions + key dates.
-class InsightDetailScreen extends StatefulWidget {
+class InsightDetailScreen extends ConsumerStatefulWidget {
   const InsightDetailScreen({super.key, required this.tab});
   final String tab;
 
   @override
-  State<InsightDetailScreen> createState() => _InsightDetailScreenState();
+  ConsumerState<InsightDetailScreen> createState() => _InsightDetailScreenState();
 }
 
-class _InsightDetailScreenState extends State<InsightDetailScreen> {
+class _InsightDetailScreenState extends ConsumerState<InsightDetailScreen> {
   late String _activeTab;
 
   @override
@@ -153,6 +156,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final d = _insightDetails[_activeTab]!;
+    final lang = ref.watch(langProvider);
 
     return CosmicScaffold(
       child: SafeArea(
@@ -165,18 +169,19 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text('Detailed Analysis',
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('detailed_analysis_title', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.share_outlined,
-                        color: AppColors.cosmicTextDark),
+                        color: AppColors.white),
                     onPressed: () {},
                   ),
                 ],
@@ -209,7 +214,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            t,
+                            AppStrings.tr('score_${t.toLowerCase()}', lang),
                             style: AppTextStyles.labelSmall(
                               color: active
                                   ? AppColors.cosmicGoldLight
@@ -243,7 +248,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(d.tab,
+                              Text(AppStrings.tr('score_${d.tab.toLowerCase()}', lang),
                                   style: AppTextStyles.sectionCaps(
                                       color: d.scoreColor)),
                               const SizedBox(height: 6),
@@ -292,7 +297,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Monthly Breakdown 2024',
+                        Text(AppStrings.tr('monthly_breakdown_2024', lang),
                             style: AppTextStyles.labelLarge()),
                         const SizedBox(height: 14),
                         SizedBox(
@@ -311,7 +316,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Key Predictions',
+                        Text(AppStrings.tr('key_predictions', lang),
                             style: AppTextStyles.labelLarge(
                                 color: AppColors.cosmicGold)),
                         const SizedBox(height: 10),
@@ -348,7 +353,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                                 const Icon(Icons.check_circle_outline,
                                     color: AppColors.scoreCareer, size: 14),
                                 const SizedBox(width: 6),
-                                Text('Favorable',
+                                Text(AppStrings.tr('favorable', lang),
                                     style: AppTextStyles.labelMedium(
                                         color: AppColors.scoreCareer)),
                               ]),
@@ -370,7 +375,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                                 const Icon(Icons.warning_amber_outlined,
                                     color: AppColors.error, size: 14),
                                 const SizedBox(width: 6),
-                                Text('Caution',
+                                Text(AppStrings.tr('caution', lang),
                                     style: AppTextStyles.labelMedium(
                                         color: AppColors.error)),
                               ]),
@@ -395,7 +400,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.go('/chat'),
+                  onPressed: () => context.push('/chat'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.btnBg,
                     shape: RoundedRectangleBorder(
@@ -403,7 +408,7 @@ class _InsightDetailScreenState extends State<InsightDetailScreen> {
                   ),
                   icon: const Icon(Icons.auto_awesome,
                       color: AppColors.cosmicGold, size: 18),
-                  label: Text('ASK AI ASTROLOGER',
+                  label: Text(AppStrings.tr('ask_ai_astrologer', lang),
                       style: AppTextStyles.sectionCaps(
                           color: AppColors.btnText)),
                 ),

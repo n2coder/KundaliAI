@@ -12,7 +12,7 @@ from typing import Any
 
 import swisseph as swe
 
-from .openai_client import get_client
+from .openai_client import chat_complete
 
 logger = logging.getLogger(__name__)
 
@@ -236,16 +236,14 @@ async def _generate_description(
     )
 
     try:
-        client = get_client()
-        resp = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
+        content = await chat_complete(
+            [{"role": "user", "content": prompt}],
             max_tokens=300,
+            temperature=0.7,
             response_format={"type": "json_object"},
         )
         import json
-        data = json.loads(resp.choices[0].message.content or "{}")
+        data = json.loads(content)
         description = data.get("description", f"{planet} transiting {sign}.")
         advice = data.get("advice", "Observe planetary energies with awareness.")
         return description, advice

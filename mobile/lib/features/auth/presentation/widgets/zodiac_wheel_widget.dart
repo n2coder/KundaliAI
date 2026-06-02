@@ -72,10 +72,10 @@ class _ZodiacWheelWidgetState extends State<ZodiacWheelWidget>
 //  zodiacClipR  – clip radius for each zodiac symbol (matches visual circle size)
 //  centerClipR  – radius of the inner moon area to keep upright
 
-const double _wheelOuterFrac  = 0.400;
-const double _zodiacRFrac     = 0.368;
-const double _zodiacClipFrac  = 0.082;
-const double _centerClipFrac  = 0.185;
+const double _wheelOuterFrac  = 0.485;   // must be > zodiacRFrac + zodiacClipFrac
+const double _zodiacRFrac     = 0.382;   // distance from wheel centre to sign centre
+const double _zodiacClipFrac  = 0.096;   // clip radius per sign circle
+const double _centerClipFrac  = 0.195;   // inner moon area radius
 
 // Zodiac angles: degrees clockwise from 12-o'clock.
 // Aries at 15°, then every 30°: Aries, Taurus, Gemini, Cancer, Leo, Virgo,
@@ -137,6 +137,13 @@ class _ZodiacWheelPainter extends CustomPainter {
     final dstRect = Rect.fromLTWH(dstX, dstY, dstW, dstH);
     final paint   = Paint();
 
+    // Clip everything to the wheel disc so ONLY the circular wheel shows on top
+    // of the shared app background. The square corners of the source art
+    // (shooting star, nebula, constellations) are dropped.
+    canvas.save();
+    canvas.clipPath(Path()
+      ..addOval(Rect.fromCircle(center: Offset(cx, cy), radius: imgSize * 0.5)));
+
     // ── Layer 0: Static background — full image, no rotation ──────────────
     canvas.drawImageRect(image, srcRect, dstRect, paint);
 
@@ -189,6 +196,8 @@ class _ZodiacWheelPainter extends CustomPainter {
 
     // ── Layer 4: Twinkling star sparkles in the background ─────────────────
     _paintTwinkles(canvas, dstX, dstY, dstW, dstH);
+
+    canvas.restore(); // end wheel-disc clip
   }
 
   void _paintTwinkles(

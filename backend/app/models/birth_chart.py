@@ -18,7 +18,8 @@ class BirthChart(Base):
 
     # Chart data (pyswisseph output stored as JSONB)
     chart_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
-    # Structure: {planets: [...], houses: [...], dasha: [...], ayanamsa: float, ascendant: str}
+    # Structure: {planets: [...], houses: [...], ayanamsa: float, ascendant: str, ...}
+    # NOTE: birth-invariant only — Dasha is computed at read time, not stored.
 
     # Derived fields for quick queries (avoids parsing JSONB for every request)
     sun_sign: Mapped[str | None] = mapped_column(String(20))

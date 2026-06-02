@@ -33,10 +33,19 @@ async def update_me(
     await db.refresh(current_user)
     await db.refresh(current_user, attribute_names=["birth_chart"])
 
-    # Auto-trigger chart computation when all birth fields become complete
+    # Recompute the chart synchronously when birth fields change and are complete
+    # (Celery-independent — see birth_chart.compute for rationale).
     birth_fields_touched = _BIRTH_FIELDS & changes.keys()
     if birth_fields_touched and _birth_details_complete(current_user):
-        _enqueue_chart(str(current_user.id))
+        from ..services import chart_service
+        await chart_service.compute_and_store_chart(
+            current_user,
+            current_user.dob,
+            current_user.tob,
+            current_user.birth_lat,
+            current_user.birth_lng,
+            db,
+        )
 
     return UserOut.model_validate(current_user)
 
@@ -75,11 +84,3 @@ async def clear_chat(
 
 def _birth_details_complete(user: User) -> bool:
     return all([user.dob, user.tob, user.birth_lat, user.birth_lng])
-
-
-def _enqueue_chart(user_id: str) -> None:
-    try:
-        from ..tasks.chart_compute import compute_chart_for_user
-        compute_chart_for_user.delay(user_id)
-    except Exception:
-        pass  # Celery unavailable in test/dev — chart can be triggered manually

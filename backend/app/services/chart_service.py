@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..models.birth_chart import BirthChartCache
+from ..models.birth_chart import BirthChart, BirthChartCache
 
 _tf = TimezoneFinder()
 
@@ -73,6 +73,42 @@ async def get_or_compute_chart(
     return chart_data
 
 
+async def compute_and_store_chart(
+    user, dob: date, tob: time, lat: float, lng: float, db: AsyncSession
+) -> dict:
+    """
+    Compute the user's natal chart and upsert their BirthChart row — synchronously
+    and independent of Celery. Use on the request path so onboarding always
+    produces a chart immediately (a missing chart is why scores/horoscopes fall
+    back to generic, identical-for-everyone values).
+
+    `user` must have its `birth_chart` relationship eagerly loaded.
+    """
+    chart_data = await get_or_compute_chart(dob, tob, lat, lng, db)
+    maha = dasha_from_chart(chart_data, dob).get("mahadasha")
+
+    if user.birth_chart is None:
+        db.add(BirthChart(
+            user_id=user.id,
+            chart_data=chart_data,
+            sun_sign=chart_data.get("sun_sign"),
+            moon_sign=chart_data.get("moon_sign"),
+            ascendant=chart_data.get("ascendant"),
+            current_dasha=maha,
+        ))
+    else:
+        bc = user.birth_chart
+        bc.chart_data = chart_data
+        bc.sun_sign = chart_data.get("sun_sign")
+        bc.moon_sign = chart_data.get("moon_sign")
+        bc.ascendant = chart_data.get("ascendant")
+        bc.current_dasha = maha
+
+    await db.commit()
+    await db.refresh(user, attribute_names=["birth_chart"])
+    return chart_data
+
+
 def compute_vedic_chart(dob: date, tob: time, lat: float, lng: float) -> dict:
     """
     Compute a sidereal Vedic birth chart using pyswisseph (Lahiri ayanamsa,
@@ -86,15 +122,12 @@ def compute_vedic_chart(dob: date, tob: time, lat: float, lng: float) -> dict:
 
     # ── Planets ───────────────────────────────────────────────────────────────
     planets: list[dict] = []
-    moon_lon = 0.0
 
     for pid, name in _PLANET_IDS:
         pos, _ = swe.calc_ut(jd, pid, flags)
         lon = pos[0] % 360
         retrograde = pos[3] < 0
         planets.append(_planet_dict(name, lon, retrograde))
-        if name == "Moon":
-            moon_lon = lon
 
     # Ketu = Rahu + 180°
     rahu_lon = next(p["longitude"] for p in planets if p["name"] == "Rahu")
@@ -118,6 +151,12 @@ def compute_vedic_chart(dob: date, tob: time, lat: float, lng: float) -> dict:
     sun_sign = next(p["sign"] for p in planets if p["name"] == "Sun")
     moon_sign = next(p["sign"] for p in planets if p["name"] == "Moon")
 
+    # NOTE: Dasha is intentionally NOT stored here. The active Mahadasha /
+    # Antardasha change with time, so they are computed fresh on every read
+    # from the (birth-invariant) Moon longitude + date of birth via
+    # `dasha_from_chart`. Leaving it out also keeps `birth_chart_cache`
+    # correctly birth-invariant (two charts with identical birth params are
+    # now genuinely identical, regardless of when they were first computed).
     return {
         "ayanamsa": round(ayanamsa, 4),
         "ascendant": SIGNS[asc_sign_idx],
@@ -126,7 +165,6 @@ def compute_vedic_chart(dob: date, tob: time, lat: float, lng: float) -> dict:
         "moon_sign": moon_sign,
         "planets": planets,
         "houses": houses,
-        "dasha": _vimshottari_dasha(moon_lon, dob),
     }
 
 
@@ -153,8 +191,13 @@ def _local_to_ut(dob: date, tob: time, lat: float, lng: float) -> float:
     return ut.hour + ut.minute / 60.0 + ut.second / 3600.0
 
 
-def _vimshottari_dasha(moon_lon: float, dob: date) -> dict:
-    """Return current Mahadasha and Antardasha."""
+def current_dasha(moon_lon: float, dob: date) -> dict:
+    """Return the *currently active* Mahadasha and Antardasha.
+
+    Computed against today's date from the natal Moon longitude + date of
+    birth. Deliberately time-dependent — must be recomputed on every read and
+    never cached in the stored chart (see `compute_vedic_chart`).
+    """
     nakshatra_span = 360.0 / 27.0
     nakshatra_idx = int(moon_lon / nakshatra_span)
     lord = _NAKSHATRA_LORDS[nakshatra_idx]
@@ -186,6 +229,28 @@ def _vimshottari_dasha(moon_lon: float, dob: date) -> dict:
         "antardasha": antar_lord,
         "antardasha_remaining_years": round(antar_remaining, 2),
     }
+
+
+def dasha_from_chart(chart_data: dict, dob: date | None) -> dict:
+    """Compute the current dasha from a stored birth chart + date of birth.
+
+    Pulls the birth-invariant natal Moon longitude out of the stored chart and
+    computes today's active period. Returns {} when data is insufficient.
+    """
+    if dob is None:
+        return {}
+    moon_lon = next(
+        (p["longitude"] for p in chart_data.get("planets", []) if p.get("name") == "Moon"),
+        None,
+    )
+    if moon_lon is None:
+        return {}
+    return current_dasha(moon_lon, dob)
+
+
+def with_current_dasha(chart_data: dict, dob: date | None) -> dict:
+    """Return a copy of chart_data with a freshly computed `dasha` key."""
+    return {**chart_data, "dasha": dasha_from_chart(chart_data, dob)}
 
 
 def _current_antardasha(maha_lord: str, years_into_maha: float) -> tuple[str, float]:

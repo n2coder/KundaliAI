@@ -10,7 +10,7 @@ from ..models import User
 from ..models.birth_chart import BirthChart
 from ..models.insight_prediction import InsightPrediction, InsightCategory
 from .horoscope_service import _chart_summary
-from .openai_client import get_client
+from .openai_client import chat_complete
 
 logger = logging.getLogger(__name__)
 _MODEL = "gpt-4o-mini"
@@ -53,7 +53,7 @@ async def get_or_generate(
     if prediction and existing_content:
         return prediction
 
-    data = await _generate(birth_chart.chart_data, category, month_start, lang)
+    data = await _generate(birth_chart.chart_data, category, month_start, lang, user.dob)
 
     if prediction is None:
         prediction = InsightPrediction(
@@ -82,8 +82,9 @@ async def _generate(
     category: InsightCategory,
     month_start: date,
     lang: str,
+    dob: date,
 ) -> dict:
-    summary = _chart_summary(chart_data)
+    summary = _chart_summary(chart_data, dob)
     cat_label = _CATEGORY_LABELS[category]
     lang_instr = _LANG_INSTRUCTION.get(lang, _LANG_INSTRUCTION["en"])
     month_label = month_start.strftime("%B %Y")
@@ -103,17 +104,17 @@ async def _generate(
     )
 
     try:
-        resp = await get_client().chat.completions.create(
-            model=_MODEL,
-            messages=[
+        content = await chat_complete(
+            [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user_msg},
             ],
-            response_format={"type": "json_object"},
+            model=_MODEL,
             max_tokens=600,
             temperature=0.65,
+            response_format={"type": "json_object"},
         )
-        return json.loads(resp.choices[0].message.content)
+        return json.loads(content)
     except Exception as exc:
         logger.error("Insight generation failed for %s: %s", category, exc)
         return {"score": 0.5, "content": "", "best_periods": []}

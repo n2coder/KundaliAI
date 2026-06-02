@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 from .celery_app import celery_app
 from ..database import AsyncSessionLocal
 from ..models import User, BirthChart
-from ..services.chart_service import get_or_compute_chart
+from ..services.chart_service import get_or_compute_chart, dasha_from_chart
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,12 @@ async def _async_compute(user_id: str) -> None:
             db=db,
         )
 
+        # Compute-time snapshot of the active Mahadasha for the denormalised
+        # column. The authoritative dasha is computed fresh at read time
+        # (dasha_from_chart); this column is only a convenience hint and will
+        # go stale — do not rely on it for display.
+        maha = dasha_from_chart(chart_data, user.dob).get("mahadasha")
+
         if user.birth_chart is None:
             birth_chart = BirthChart(
                 user_id=user.id,
@@ -60,7 +66,7 @@ async def _async_compute(user_id: str) -> None:
                 sun_sign=chart_data.get("sun_sign"),
                 moon_sign=chart_data.get("moon_sign"),
                 ascendant=chart_data.get("ascendant"),
-                current_dasha=chart_data.get("dasha", {}).get("mahadasha"),
+                current_dasha=maha,
             )
             db.add(birth_chart)
         else:
@@ -68,7 +74,7 @@ async def _async_compute(user_id: str) -> None:
             user.birth_chart.sun_sign = chart_data.get("sun_sign")
             user.birth_chart.moon_sign = chart_data.get("moon_sign")
             user.birth_chart.ascendant = chart_data.get("ascendant")
-            user.birth_chart.current_dasha = chart_data.get("dasha", {}).get("mahadasha")
+            user.birth_chart.current_dasha = maha
 
         await db.commit()
         logger.info("Chart computed for user %s: %s rising", user_id, chart_data.get("ascendant"))

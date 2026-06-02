@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/cosmic_scaffold.dart';
@@ -7,69 +10,62 @@ import '../../../core/widgets/cosmic_scaffold.dart';
 class _GuidanceTopic {
   const _GuidanceTopic({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.titleKey,
+    required this.subKey,
     required this.color,
-    required this.tags,
   });
   final String icon;
-  final String title;
-  final String subtitle;
+  final String titleKey;
+  final String subKey;
   final Color color;
-  final List<String> tags;
 }
 
 const _topics = [
   _GuidanceTopic(
     icon: '💼',
-    title: 'Career & Finance',
-    subtitle: 'Job timing, business muhurta, investment windows',
+    titleKey: 'topic_career',
+    subKey: 'topic_career_sub',
     color: AppColors.scoreCareer,
-    tags: ['Job Change', 'Business', 'Investment'],
   ),
   _GuidanceTopic(
     icon: '❤️',
-    title: 'Love & Marriage',
-    subtitle: 'Compatibility, marriage muhurta, relationship healing',
+    titleKey: 'topic_love',
+    subKey: 'topic_love_sub',
     color: AppColors.scoreLove,
-    tags: ['Compatibility', 'Marriage Date', 'Relationship'],
   ),
   _GuidanceTopic(
     icon: '🏠',
-    title: 'Home & Property',
-    subtitle: 'Auspicious dates for moving, buying, or renovating',
+    titleKey: 'topic_home',
+    subKey: 'topic_home_sub',
     color: AppColors.cosmicGold,
-    tags: ['Buy Property', 'Moving In', 'Vastu'],
   ),
   _GuidanceTopic(
     icon: '🎓',
-    title: 'Education & Skills',
-    subtitle: 'Study timing, exam luck, learning windows',
+    titleKey: 'topic_education',
+    subKey: 'topic_education_sub',
     color: AppColors.scoreHealth,
-    tags: ['Exams', 'New Course', 'Study Plan'],
   ),
   _GuidanceTopic(
     icon: '🌿',
-    title: 'Health & Wellness',
-    subtitle: 'Auspicious days for treatment, surgery, detox',
+    titleKey: 'topic_health',
+    subKey: 'topic_health_sub',
     color: AppColors.scoreMoney,
-    tags: ['Surgery Date', 'Detox', 'Mental Wellness'],
   ),
   _GuidanceTopic(
     icon: '✈️',
-    title: 'Travel & Foreign',
-    subtitle: 'Auspicious travel, foreign settlement windows',
+    titleKey: 'topic_travel',
+    subKey: 'topic_travel_sub',
     color: AppColors.cosmicGoldLight,
-    tags: ['Best Travel Day', 'Foreign Settlement', 'Visa'],
   ),
 ];
 
 /// Guidance screen — topic picker → AI-powered personalised Vedic guidance.
-class GuidanceScreen extends StatelessWidget {
+class GuidanceScreen extends ConsumerWidget {
   const GuidanceScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return CosmicScaffold(
       child: Column(
         children: [
@@ -85,17 +81,19 @@ class GuidanceScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
                       child: Column(
                         children: [
-                          Text('Personalised Guidance',
-                              style: AppTextStyles.headingMedium()),
-                          Text('Ask about any life area',
-                              style: AppTextStyles.bodySmall()),
+                          Text(AppStrings.tr('personalised_guidance', lang),
+                              style: AppTextStyles.headingMedium(
+                                  color: AppColors.white)),
+                          Text(AppStrings.tr('ask_any_life_area', lang),
+                              style: AppTextStyles.bodySmall(
+                                  color: AppColors.white.withOpacity(0.7))),
                         ],
                       ),
                     ),
@@ -126,12 +124,12 @@ class GuidanceScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("WHAT WOULD YOU\nLIKE GUIDANCE ON?",
+                              Text(AppStrings.tr('what_guidance_on', lang),
                                   style: AppTextStyles.sectionCaps(
                                       color: AppColors.cosmicGoldLight)),
                               const SizedBox(height: 8),
                               Text(
-                                'Choose a topic and our AI Vedic astrologer will analyse your birth chart for personalised insights.',
+                                AppStrings.tr('guidance_hero_sub', lang),
                                 style: AppTextStyles.bodySmall(
                                     color:
                                         AppColors.white.withOpacity(0.72)),
@@ -149,7 +147,7 @@ class GuidanceScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  Text('CHOOSE A TOPIC',
+                  Text(AppStrings.tr('choose_a_topic', lang),
                       style: AppTextStyles.sectionCaps()),
                   const SizedBox(height: 12),
 
@@ -172,10 +170,10 @@ class GuidanceScreen extends StatelessWidget {
                               Text(t.icon,
                                   style: const TextStyle(fontSize: 26)),
                               const SizedBox(height: 8),
-                              Text(t.title,
+                              Text(AppStrings.tr(t.titleKey, lang),
                                   style: AppTextStyles.labelLarge()),
                               const SizedBox(height: 4),
-                              Text(t.subtitle,
+                              Text(AppStrings.tr(t.subKey, lang),
                                   style: AppTextStyles.bodySmall(),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis),
@@ -188,12 +186,13 @@ class GuidanceScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // Quick questions
-                  Text('QUICK QUESTIONS', style: AppTextStyles.sectionCaps()),
+                  Text(AppStrings.tr('quick_questions', lang),
+                      style: AppTextStyles.sectionCaps()),
                   const SizedBox(height: 12),
                   ..._quickQuestions.map((q) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: GestureDetector(
-                          onTap: () => context.go('/chat'),
+                          onTap: () => context.push('/chat'),
                           child: CosmicCard(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 12),
@@ -203,8 +202,8 @@ class GuidanceScreen extends StatelessWidget {
                                     color: AppColors.cosmicGold, size: 16),
                                 const SizedBox(width: 10),
                                 Expanded(
-                                  child:
-                                      Text(q, style: AppTextStyles.bodyMedium()),
+                                  child: Text(AppStrings.tr(q, lang),
+                                      style: AppTextStyles.bodyMedium()),
                                 ),
                                 const Icon(Icons.arrow_forward_ios,
                                     color: AppColors.cosmicTextLight, size: 14),
@@ -225,7 +224,7 @@ class GuidanceScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.go('/chat'),
+                  onPressed: () => context.push('/chat'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.btnBg,
                     shape: RoundedRectangleBorder(
@@ -233,7 +232,7 @@ class GuidanceScreen extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.chat_bubble_outline,
                       color: AppColors.cosmicGold, size: 18),
-                  label: Text('ASK ANYTHING',
+                  label: Text(AppStrings.tr('ask_anything_caps', lang),
                       style:
                           AppTextStyles.sectionCaps(color: AppColors.btnText)),
                 ),
@@ -262,13 +261,8 @@ class GuidanceScreen extends StatelessWidget {
 
   void _openChat(BuildContext context, _GuidanceTopic topic) {
     // Navigate to chat with topic pre-loaded
-    context.go('/chat');
+    context.push('/chat');
   }
 }
 
-const _quickQuestions = [
-  'When is the best time for me to change my job?',
-  'Will I find love this year?',
-  'Is this a good time to start a business?',
-  'What planetary remedies should I follow?',
-];
+const _quickQuestions = ['qq_job', 'qq_love', 'qq_business', 'qq_remedies'];

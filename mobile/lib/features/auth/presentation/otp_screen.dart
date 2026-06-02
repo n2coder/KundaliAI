@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -114,6 +116,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(langProvider);
     return CosmicScaffold(
       style: CosmicStyle.warm,
       child: Column(
@@ -125,7 +128,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 const CosmicStarBadge(size: 52),
                 const SizedBox(height: 20),
                 Text(
-                  'Verify Your Number',
+                  AppStrings.tr('verify_number', lang),
                   style: AppTextStyles.displayMedium(
                       color: AppColors.cosmicGoldGlow),
                 ),
@@ -133,7 +136,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 const CosmicDivider(),
                 const SizedBox(height: 8),
                 Text(
-                  "We've sent a 6-digit OTP to\n${widget.phone}",
+                  "${AppStrings.tr('we_sent_otp', lang)}\n${widget.phone}",
                   textAlign: TextAlign.center,
                   style: AppTextStyles.bodyMedium(
                       color: AppColors.cosmicGoldLight),
@@ -228,7 +231,7 @@ class _EmptyPhonePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _OtpCard extends StatelessWidget {
+class _OtpCard extends ConsumerWidget {
   const _OtpCard({
     required this.streamCtrl,
     required this.otp,
@@ -252,7 +255,8 @@ class _OtpCard extends StatelessWidget {
   final String? error;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.cardBg,
@@ -262,7 +266,7 @@ class _OtpCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Enter the 6-digit OTP',
+          Text(AppStrings.tr('enter_6_otp', lang),
               style:
                   AppTextStyles.labelLarge(color: AppColors.cosmicTextMid)),
           const SizedBox(height: 16),
@@ -301,12 +305,12 @@ class _OtpCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Didn't receive the code? ",
+              Text(AppStrings.tr('didnt_receive_code', lang),
                   style: AppTextStyles.bodySmall()),
               GestureDetector(
                 onTap: countdown == 0 ? onResend : null,
                 child: Text(
-                  'Resend OTP',
+                  AppStrings.tr('resend_otp', lang),
                   style: AppTextStyles.bodySmall(
                     color: countdown == 0
                         ? AppColors.cosmicGold
@@ -346,7 +350,7 @@ class _OtpCard extends StatelessWidget {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Verify & Continue',
+                        Text(AppStrings.tr('verify_continue', lang),
                             style: AppTextStyles.buttonText(
                                 color: AppColors.cosmicGoldLight)),
                         const SizedBox(width: 8),

@@ -1,7 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../i18n/app_strings.dart';
+import '../i18n/lang_provider.dart';
 import '../theme/app_colors.dart';
 
 /// Background style — night for splash, warm for all auth/content screens.
@@ -25,221 +28,47 @@ class CosmicScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Light status-bar icons read well over the dark, scrimmed artwork.
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
     ));
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.cosmicBase,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Fixed cosmic gradient — never scrolls
-          RepaintBoundary(child: CustomPaint(painter: _SkyGradientPainter(style: style))),
-          // Star field — fewer stars on warm style
-          RepaintBoundary(child: CustomPaint(painter: _StarPainter(style: style))),
+          // Shared cosmic background artwork — fixed, never scrolls.
+          Image.asset(
+            'assets/images/background.png',
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+          ),
+          // Contrast scrim: the artwork has a very bright amber sun-band in the
+          // middle, so a graduated dark overlay keeps white headers, gold
+          // accents and cream cards readable on every screen, while still
+          // letting the dark starfield (top) and mountains (bottom) show.
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x4D000000), // ~30% — top / header band (dark sky)
+                  Color(0x66000000), // ~40% — mid (tames the bright sun)
+                  Color(0x80000000), // ~50% — bottom / nav band
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+            ),
+          ),
           // App content
           child,
         ],
       ),
     );
   }
-}
-
-// ── Sky gradient ─────────────────────────────────────────────────────────────
-
-class _SkyGradientPainter extends CustomPainter {
-  const _SkyGradientPainter({this.style = CosmicStyle.night});
-  final CosmicStyle style;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-
-    final LinearGradient skyGrad;
-    if (style == CosmicStyle.warm) {
-      // Warm peach/salmon top → orange mid → dark mountains
-      // Lighter at top so dark serif text is readable
-      skyGrad = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        stops: [0.0, 0.10, 0.28, 0.52, 0.72, 0.88, 1.0],
-        colors: [
-          Color(0xFF1C0E06),
-          Color(0xFF7B3818),
-          Color(0xFFB06030),
-          Color(0xFFCC7030),
-          Color(0xFFD07C30),
-          Color(0xFFA03A10),
-          Color(0xFF060302),
-        ],
-      );
-    } else {
-      // Night sky: near-black top (stars pop), vivid fiery orange below
-      skyGrad = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        stops: [0.0, 0.08, 0.28, 0.50, 0.65, 0.80, 1.0],
-        colors: [
-          Color(0xFF050202),
-          Color(0xFF140804),
-          Color(0xFF6B1E00),
-          Color(0xFFCC4E10),
-          Color(0xFFE07228),
-          Color(0xFFAA3C10),
-          Color(0xFF050202),
-        ],
-      );
-    }
-    canvas.drawRect(rect, Paint()..shader = skyGrad.createShader(rect));
-
-    // Wide amber horizon glow
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(size.width * 0.5, size.height * 0.68),
-        width: size.width * 1.6,
-        height: size.height * 0.32,
-      ),
-      Paint()
-        ..color = const Color(0xFFE87030).withOpacity(0.30)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60),
-    );
-
-    // Shooting star / comet (top-left diagonal)
-    final cometPaint = Paint()
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-    cometPaint.shader = const LinearGradient(
-      colors: [Color(0x00F0D080), Color(0xCCF8E890), Color(0x00F0D080)],
-    ).createShader(Rect.fromPoints(
-      Offset(size.width * 0.08, size.height * 0.06),
-      Offset(size.width * 0.30, size.height * 0.12),
-    ));
-    canvas.drawLine(
-      Offset(size.width * 0.08, size.height * 0.06),
-      Offset(size.width * 0.30, size.height * 0.12),
-      cometPaint,
-    );
-    // comet head glow
-    canvas.drawCircle(
-      Offset(size.width * 0.30, size.height * 0.12),
-      2.5,
-      Paint()
-        ..color = const Color(0xFFF8E890).withOpacity(0.9)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
-
-    // Mountain silhouette — matching mockup profile
-    final hills = Path()
-      ..moveTo(0, size.height)
-      ..lineTo(0, size.height * 0.86)
-      ..quadraticBezierTo(size.width * 0.12, size.height * 0.74,
-          size.width * 0.25, size.height * 0.82)
-      ..quadraticBezierTo(size.width * 0.38, size.height * 0.69,
-          size.width * 0.50, size.height * 0.76)
-      ..quadraticBezierTo(size.width * 0.62, size.height * 0.67,
-          size.width * 0.75, size.height * 0.79)
-      ..quadraticBezierTo(size.width * 0.88, size.height * 0.72,
-          size.width, size.height * 0.84)
-      ..lineTo(size.width, size.height)
-      ..close();
-    canvas.drawPath(hills, Paint()..color = const Color(0xFF060302));
-
-    // Sun — large glowing orb on the horizon
-    final sunX = size.width * 0.5;
-    final sunY = size.height * 0.782;
-    // Outer soft glow
-    canvas.drawCircle(
-      Offset(sunX, sunY), 70,
-      Paint()
-        ..color = const Color(0xFFFF8C20).withOpacity(0.28)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 40),
-    );
-    // Mid glow
-    canvas.drawCircle(
-      Offset(sunX, sunY), 36,
-      Paint()
-        ..color = const Color(0xFFF5C040).withOpacity(0.65)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
-    );
-    // Sun disk
-    canvas.drawCircle(
-      Offset(sunX, sunY), 16,
-      Paint()..color = const Color(0xFFFAE070),
-    );
-
-    // Water reflection — column of light from sun down
-    canvas.drawRect(
-      Rect.fromLTWH(size.width * 0.44, size.height * 0.79, size.width * 0.12, size.height * 0.21),
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFFF5C040).withOpacity(0.30),
-            const Color(0xFFF5C040).withOpacity(0.0),
-          ],
-        ).createShader(Rect.fromLTWH(size.width * 0.44, size.height * 0.79, size.width * 0.12, size.height * 0.21))
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_SkyGradientPainter old) => old.style != style;
-}
-
-// ── Star field ───────────────────────────────────────────────────────────────
-
-class _StarPainter extends CustomPainter {
-  const _StarPainter({this.style = CosmicStyle.night});
-  final CosmicStyle style;
-
-  static final _rng = math.Random(42);
-  static final _stars = List.generate(55, (_) => (
-        x: _rng.nextDouble(),
-        y: _rng.nextDouble() * 0.48,
-        r: _rng.nextDouble() * 1.4 + 0.4,
-        a: _rng.nextDouble() * 0.65 + 0.25,
-      ));
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final opacity = style == CosmicStyle.warm ? 0.35 : 1.0;
-    for (final s in _stars) {
-      canvas.drawCircle(
-        Offset(s.x * size.width, s.y * size.height),
-        s.r,
-        Paint()..color = const Color(0xFFF0D080).withOpacity(s.a * opacity),
-      );
-    }
-    // Constellation lines — dimmer on warm style
-    final lineOpacity = style == CosmicStyle.warm ? 0.10 : 0.18;
-    _constellationLines(canvas, size, lineOpacity, [
-      Offset(size.width * 0.08, size.height * 0.04),
-      Offset(size.width * 0.18, size.height * 0.07),
-      Offset(size.width * 0.26, size.height * 0.03),
-      Offset(size.width * 0.20, size.height * 0.12),
-    ]);
-    _constellationLines(canvas, size, lineOpacity, [
-      Offset(size.width * 0.72, size.height * 0.03),
-      Offset(size.width * 0.80, size.height * 0.08),
-      Offset(size.width * 0.89, size.height * 0.04),
-      Offset(size.width * 0.84, size.height * 0.13),
-    ]);
-  }
-
-  void _constellationLines(Canvas canvas, Size size, double opacity, List<Offset> pts) {
-    final p = Paint()
-      ..color = const Color(0xFFC89030).withOpacity(opacity)
-      ..strokeWidth = 0.7;
-    for (var i = 0; i < pts.length - 1; i++) {
-      canvas.drawLine(pts[i], pts[i + 1], p);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_StarPainter old) => old.style != style;
 }
 
 // ── Reusable shared widgets ───────────────────────────────────────────────────
@@ -452,7 +281,7 @@ class CosmicAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 /// Universal bottom nav — dark warm bg with gold active icons.
-class CosmicBottomNav extends StatelessWidget {
+class CosmicBottomNav extends ConsumerWidget {
   const CosmicBottomNav({
     super.key,
     required this.currentIndex,
@@ -462,16 +291,16 @@ class CosmicBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  static const _items = [
-    (icon: Icons.home_rounded,          label: 'Home'),
-    (icon: Icons.psychology_outlined,   label: 'Insights'),
-    (icon: Icons.auto_awesome,          label: ''),       // centre star
-    (icon: Icons.spa_outlined,          label: 'Guidance'),
-    (icon: Icons.person_outline_rounded, label: 'Profile'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
+    final items = [
+      (icon: Icons.home_rounded,           label: AppStrings.tr('nav_home', lang)),
+      (icon: Icons.psychology_outlined,    label: AppStrings.tr('nav_insights', lang)),
+      (icon: Icons.auto_awesome,           label: ''), // centre star
+      (icon: Icons.spa_outlined,           label: AppStrings.tr('nav_guidance', lang)),
+      (icon: Icons.person_outline_rounded, label: AppStrings.tr('nav_profile', lang)),
+    ];
     return Container(
       decoration: BoxDecoration(
         color: AppColors.navBg.withOpacity(0.94),
@@ -485,8 +314,8 @@ class CosmicBottomNav extends StatelessWidget {
         child: SizedBox(
           height: 58,
           child: Row(
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
+            children: List.generate(items.length, (i) {
+              final item = items[i];
               final active = currentIndex == i;
               if (i == 2) {
                 // Centre cosmic action button

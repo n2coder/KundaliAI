@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/api/api_endpoints.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/cosmic_scaffold.dart';
 
-/// User profile — shows real user data from auth state.
+/// User profile — real user data, trial countdown, settings.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).valueOrNull;
+    final lang = ref.watch(langProvider);
 
     return CosmicScaffold(
       child: Column(
@@ -28,19 +34,20 @@ class ProfileScreen extends ConsumerWidget {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.arrow_back_ios_new,
-                              color: AppColors.cosmicTextDark, size: 18),
-                          onPressed: () => Navigator.of(context).maybePop(),
+                              color: AppColors.white, size: 18),
+                          onPressed: () => context.go('/home'),
                         ),
                         Expanded(
                           child: Center(
-                            child: Text('My Profile',
-                                style: AppTextStyles.headingMedium()),
+                            child: Text(AppStrings.tr('my_profile', lang),
+                                style: AppTextStyles.headingMedium(
+                                    color: AppColors.white)),
                           ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.edit_outlined,
-                              color: AppColors.cosmicTextDark, size: 20),
-                          onPressed: () {},
+                              color: AppColors.white, size: 20),
+                          onPressed: () => context.push('/birth-details'),
                         ),
                       ],
                     ),
@@ -75,41 +82,46 @@ class ProfileScreen extends ConsumerWidget {
                               Text(
                                 user?.name ?? user?.phone ?? '—',
                                 style: AppTextStyles.headingLarge(
-                                    color: AppColors.cosmicTextDark),
+                                    color: AppColors.white),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 user?.phone ?? '',
-                                style: AppTextStyles.bodySmall(),
+                                style: AppTextStyles.bodySmall(
+                                    color: AppColors.white.withOpacity(0.7)),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        // Subscription badge
-                        _SubscriptionBadge(user: user),
+                        // Trial / subscription card
+                        _TrialCard(
+                          user: user,
+                          lang: lang,
+                          onUpgrade: () => _upgrade(context, ref),
+                        ),
                         const SizedBox(height: 20),
 
                         // Birth details
-                        _SectionHeader('BIRTH DETAILS'),
+                        _SectionHeader(AppStrings.tr('birth_details', lang)),
                         const SizedBox(height: 10),
                         CosmicCard(
                           child: Column(
                             children: [
                               _DetailRow(
                                 icon: Icons.calendar_today_outlined,
-                                label: 'Date of Birth',
+                                label: AppStrings.tr('dob', lang),
                                 value: user?.dob ?? '—',
                               ),
                               _DetailRow(
                                 icon: Icons.access_time,
-                                label: 'Time of Birth',
+                                label: AppStrings.tr('tob', lang),
                                 value: user?.tob ?? '—',
                               ),
                               _DetailRow(
                                 icon: Icons.location_on_outlined,
-                                label: 'Place of Birth',
+                                label: AppStrings.tr('place_of_birth', lang),
                                 value: user?.birthPlace ?? '—',
                                 isLast: true,
                               ),
@@ -119,7 +131,7 @@ class ProfileScreen extends ConsumerWidget {
                         const SizedBox(height: 20),
 
                         // Settings
-                        _SectionHeader('SETTINGS'),
+                        _SectionHeader(AppStrings.tr('settings', lang)),
                         const SizedBox(height: 10),
                         CosmicCard(
                           padding: EdgeInsets.zero,
@@ -127,32 +139,35 @@ class ProfileScreen extends ConsumerWidget {
                             children: [
                               _SettingsTile(
                                 icon: Icons.notifications_outlined,
-                                label: 'Notifications',
-                                onTap: () {},
+                                label: AppStrings.tr('notifications', lang),
+                                onTap: () => _comingSoon(context),
                               ),
                               _SettingsTile(
                                 icon: Icons.language,
-                                label: 'Language',
-                                trailing:
-                                    user?.language == 'hi' ? 'Hindi' : 'English',
-                                onTap: () {},
+                                label: AppStrings.tr('language', lang),
+                                trailing: lang == 'hi'
+                                    ? AppStrings.tr('hindi', lang)
+                                    : AppStrings.tr('english', lang),
+                                onTap: () => _chooseLanguage(context, ref),
                               ),
                               _SettingsTile(
                                 icon: Icons.privacy_tip_outlined,
-                                label: 'Privacy Policy',
-                                onTap: () {},
+                                label: AppStrings.tr('privacy_policy', lang),
+                                onTap: () => _comingSoon(context),
                               ),
                               _SettingsTile(
                                 icon: Icons.help_outline,
-                                label: 'Help & Support',
-                                onTap: () {},
+                                label: AppStrings.tr('help_support', lang),
+                                onTap: () => _comingSoon(context),
                               ),
                               _SettingsTile(
                                 icon: Icons.logout,
-                                label: 'Sign Out',
+                                label: AppStrings.tr('sign_out', lang),
                                 labelColor: AppColors.error,
                                 onTap: () async {
-                                  await ref.read(authProvider.notifier).signOut();
+                                  await ref
+                                      .read(authProvider.notifier)
+                                      .signOut();
                                   if (context.mounted) context.go('/');
                                 },
                                 isLast: true,
@@ -162,9 +177,9 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 24),
                         Center(
-                          child: Text('KundliAI v1.0.0',
+                          child: Text(AppStrings.tr('app_version', lang),
                               style: AppTextStyles.bodySmall(
-                                  color: AppColors.cosmicTextLight)),
+                                  color: AppColors.white.withOpacity(0.5))),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -199,68 +214,186 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+
+  // ── Actions ─────────────────────────────────────────────────────────────
+
+  void _comingSoon(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Coming soon')),
+    );
+  }
+
+  Future<void> _chooseLanguage(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(langProvider);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        backgroundColor: AppColors.cardBg,
+        title: Text(AppStrings.tr('choose_language', current),
+            style: AppTextStyles.headingMedium()),
+        children: [
+          for (final entry in const [('en', 'English'), ('hi', 'हिंदी')])
+            RadioListTile<String>(
+              value: entry.$1,
+              groupValue: current,
+              activeColor: AppColors.cosmicGold,
+              title: Text(entry.$2, style: AppTextStyles.bodyMedium()),
+              onChanged: (v) {
+                if (v != null) ref.read(langProvider.notifier).setLang(v);
+                Navigator.of(ctx).pop();
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _upgrade(BuildContext context, WidgetRef ref) async {
+    final lang = ref.read(langProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final resp = await ref.read(dioProvider).post(ApiEndpoints.paymentCreate);
+      final url = (resp.data as Map<String, dynamic>?)?['short_url'] as String?;
+      if (url != null && url.isNotEmpty) {
+        await Clipboard.setData(ClipboardData(text: url));
+        messenger.showSnackBar(SnackBar(
+            content: Text(AppStrings.tr('checkout_link_copied', lang))));
+      } else {
+        messenger.showSnackBar(SnackBar(
+            content: Text(AppStrings.tr('payment_unavailable', lang))));
+      }
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(
+          content: Text(AppStrings.tr('payment_unavailable', lang))));
+    }
+  }
 }
 
-class _SubscriptionBadge extends StatelessWidget {
-  const _SubscriptionBadge({this.user});
-  final dynamic user;
+// ── Trial / subscription card with countdown + premium feature list ─────────
+
+class _TrialCard extends StatelessWidget {
+  const _TrialCard({
+    required this.user,
+    required this.lang,
+    required this.onUpgrade,
+  });
+
+  final UserModel? user;
+  final String lang;
+  final VoidCallback onUpgrade;
+
+  static const _features = [
+    (icon: Icons.auto_awesome_outlined, key: 'feat_ai_chat'),
+    (icon: Icons.insights_outlined, key: 'feat_detailed_insights'),
+    (icon: Icons.chat_bubble_outline, key: 'feat_whatsapp'),
+  ];
+
+  static int? _daysLeft(String? iso) {
+    if (iso == null) return null;
+    final end = DateTime.tryParse(iso);
+    if (end == null) return null;
+    final diff = end.toLocal().difference(DateTime.now());
+    if (diff.isNegative) return 0;
+    return (diff.inSeconds / 86400).ceil();
+  }
 
   @override
   Widget build(BuildContext context) {
     final status = user?.subscriptionStatus ?? 'trial';
     final isActive = status == 'active';
-    final label = isActive
-        ? 'Premium Active'
-        : status == 'trial'
-            ? 'Free Trial'
-            : 'Subscription Expired';
+    final days = _daysLeft(user?.trialEndsAt);
+    final trialExpired = status == 'expired' || status == 'cancelled';
+
+    final String headline;
+    if (isActive) {
+      headline = AppStrings.tr('premium_active', lang);
+    } else if (trialExpired) {
+      headline = AppStrings.tr('trial_ended', lang);
+    } else if (days == null) {
+      headline = AppStrings.tr('free_trial', lang);
+    } else if (days <= 0) {
+      headline = AppStrings.tr('trial_last_day', lang);
+    } else {
+      headline = AppStrings.tr('trial_days_left', lang)
+          .replaceFirst('{days}', '$days');
+    }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.featureDark,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.cosmicGold.withOpacity(0.4)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.auto_awesome,
-              color: AppColors.cosmicGold, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome,
+                  color: AppColors.cosmicGold, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(headline,
                     style: AppTextStyles.labelLarge(
                         color: AppColors.cosmicGoldLight)),
-                const SizedBox(height: 2),
-                Text(
-                  isActive
-                      ? 'Active subscription'
-                      : 'Upgrade to Premium at ₹30/month',
-                  style: AppTextStyles.bodySmall(
-                      color: AppColors.white.withOpacity(0.6)),
-                ),
-              ],
-            ),
-          ),
-          if (!isActive)
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cosmicGold,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: Text('UPGRADE',
-                  style: AppTextStyles.sectionCaps(
-                      color: AppColors.cosmicBase)),
+            ],
+          ),
+          if (!isActive) ...[
+            const SizedBox(height: 14),
+            Text(
+              trialExpired
+                  ? AppStrings.tr('premium_unlocks_now', lang)
+                  : AppStrings.tr('premium_unlocks_after', lang)
+                      .replaceFirst('{days}', '${days ?? 0}'),
+              style: AppTextStyles.bodySmall(
+                  color: AppColors.white.withOpacity(0.7)),
             ),
+            const SizedBox(height: 12),
+            for (final f in _features)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      trialExpired ? Icons.lock_outline : f.icon,
+                      size: 18,
+                      color: trialExpired
+                          ? AppColors.white.withOpacity(0.55)
+                          : AppColors.cosmicGoldLight,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(AppStrings.tr(f.key, lang),
+                          style: AppTextStyles.bodyMedium(
+                              color: AppColors.white.withOpacity(0.9))),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onUpgrade,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cosmicGold,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(AppStrings.tr('upgrade_now', lang),
+                    style: AppTextStyles.labelLarge(
+                        color: AppColors.cosmicBase)),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 6),
+            Text(AppStrings.tr('active_subscription', lang),
+                style: AppTextStyles.bodySmall(
+                    color: AppColors.white.withOpacity(0.7))),
+          ],
         ],
       ),
     );

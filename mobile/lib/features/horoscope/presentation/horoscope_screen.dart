@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -20,6 +22,7 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).valueOrNull;
+    final lang = ref.watch(langProvider);
     final horoscope = switch (_tab) {
       0 => ref.watch(dailyHoroscopeProvider),
       1 => ref.watch(weeklyHoroscopeProvider),
@@ -36,13 +39,14 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text("Today's Horoscope",
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('todays_horoscope', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   const SizedBox(width: 48),
@@ -68,8 +72,8 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              user != null ? '' : 'Your Sign',
-              style: AppTextStyles.headingLarge(color: AppColors.cosmicTextDark),
+              user != null ? '' : AppStrings.tr('your_sign', lang),
+              style: AppTextStyles.headingLarge(color: AppColors.white),
             ),
             const SizedBox(height: 16),
             Padding(
@@ -84,15 +88,15 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
                 child: Row(
                   children: [
                     _Tab(
-                        label: 'Today',
+                        label: AppStrings.tr('tab_today', lang),
                         active: _tab == 0,
                         onTap: () => setState(() => _tab = 0)),
                     _Tab(
-                        label: 'This Week',
+                        label: AppStrings.tr('tab_this_week', lang),
                         active: _tab == 1,
                         onTap: () => setState(() => _tab = 1)),
                     _Tab(
-                        label: 'This Month',
+                        label: AppStrings.tr('tab_this_month', lang),
                         active: _tab == 2,
                         onTap: () => setState(() => _tab = 2)),
                   ],
@@ -115,7 +119,7 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
                             color: AppColors.cosmicTextLight, size: 48),
                         const SizedBox(height: 12),
                         Text(
-                          'Could not load horoscope.\nPlease try again.',
+                          AppStrings.tr('horoscope_load_error', lang),
                           textAlign: TextAlign.center,
                           style: AppTextStyles.bodyMedium(
                               color: AppColors.cosmicTextMid),
@@ -151,7 +155,7 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
                         ),
                         icon: const Icon(Icons.share_outlined,
                             size: 18, color: AppColors.btnText),
-                        label: Text('SHARE',
+                        label: Text(AppStrings.tr('share', lang),
                             style: AppTextStyles.sectionCaps(
                                 color: AppColors.btnText)),
                       ),
@@ -170,7 +174,7 @@ class _HoroscopeScreenState extends ConsumerState<HoroscopeScreen> {
                         ),
                         icon: const Icon(Icons.chat_bubble_rounded,
                             size: 18, color: Colors.white),
-                        label: Text('WHATSAPP',
+                        label: Text(AppStrings.tr('whatsapp_caps', lang),
                             style: AppTextStyles.sectionCaps(
                                 color: Colors.white)),
                       ),
@@ -219,12 +223,13 @@ class _Tab extends StatelessWidget {
   }
 }
 
-class _HoroscopeContentCard extends StatelessWidget {
+class _HoroscopeContentCard extends ConsumerWidget {
   const _HoroscopeContentCard({required this.content});
   final String content;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return CosmicCard(
       padding: const EdgeInsets.all(18),
       child: Column(
@@ -246,7 +251,7 @@ class _HoroscopeContentCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
-              Text('Your Reading',
+              Text(AppStrings.tr('your_reading', lang),
                   style: AppTextStyles.labelLarge(
                       color: AppColors.cosmicTextDark)),
             ],
@@ -285,6 +290,7 @@ class _HoroscopeWhatsAppCardState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).valueOrNull;
+    final lang = ref.watch(langProvider);
     if (_enabled != (user?.whatsappEnabled ?? false) && !_saving) {
       _enabled = user?.whatsappEnabled ?? false;
     }
@@ -309,13 +315,13 @@ class _HoroscopeWhatsAppCardState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Get Daily Horoscope on WhatsApp',
+                Text(AppStrings.tr('get_daily_whatsapp', lang),
                     style: AppTextStyles.labelMedium()),
                 const SizedBox(height: 2),
                 Text(
                   _enabled
-                      ? 'Delivering at 7:00 AM daily'
-                      : 'Never miss your daily reading',
+                      ? AppStrings.tr('delivering_at_7', lang)
+                      : AppStrings.tr('never_miss_reading', lang),
                   style: AppTextStyles.bodySmall(
                       color: _enabled
                           ? AppColors.scoreCareer

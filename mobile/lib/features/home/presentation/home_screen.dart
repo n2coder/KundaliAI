@@ -2,7 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/models/transit_model.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,6 +16,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return CosmicScaffold(
       child: Column(
         children: [
@@ -28,21 +30,21 @@ class HomeScreen extends ConsumerWidget {
                     delegate: SliverChildListDelegate([
                       const _CosmicWeatherCard(),
                       const SizedBox(height: 22),
-                      _SectionHeader('QUICK ACCESS'),
+                      _SectionHeader(AppStrings.tr('quick_access', lang)),
                       const SizedBox(height: 10),
                       const _QuickAccessGrid(),
                       const SizedBox(height: 22),
-                      _SectionHeader('YOUR LIFE SCORES'),
+                      _SectionHeader(AppStrings.tr('your_life_scores', lang)),
                       const SizedBox(height: 12),
                       const _LifeScoresRow(),
                       const SizedBox(height: 22),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _SectionHeader('PLANETARY TRANSIT'),
+                          _SectionHeader(AppStrings.tr('planetary_transit', lang)),
                           TextButton(
-                            onPressed: () => context.go('/transits'),
-                            child: Text('View All >',
+                            onPressed: () => context.push('/transits'),
+                            child: Text(AppStrings.tr('view_all', lang),
                                 style: AppTextStyles.bodySmall(
                                     color: AppColors.cosmicGoldLight)),
                           ),
@@ -51,7 +53,7 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       const _PlanetaryTransitCard(),
                       const SizedBox(height: 22),
-                      _SectionHeader('WHATSAPP DELIVERY'),
+                      _SectionHeader(AppStrings.tr('whatsapp_delivery', lang)),
                       const SizedBox(height: 10),
                       const _WhatsAppCard(),
                       const SizedBox(height: 16),
@@ -95,6 +97,7 @@ class _HomeAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).valueOrNull;
+    final lang = ref.watch(langProvider);
     final firstName =
         user?.name?.split(' ').first ?? user?.phone ?? 'There';
     return SliverAppBar(
@@ -109,24 +112,35 @@ class _HomeAppBar extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Text('Namaste, $firstName',
-                          style: AppTextStyles.headingLarge(
-                              color: AppColors.cosmicTextDark)),
-                      const SizedBox(width: 6),
-                      const Text('👋',
-                          style: TextStyle(fontSize: 22)),
-                    ],
-                  ),
-                  Text("Let's align your stars today",
-                      style: AppTextStyles.bodySmall()),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            AppStrings.tr('home_greeting', lang)
+                                .replaceFirst('{name}', firstName),
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.headingLarge(
+                                color: AppColors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Text('👋', style: TextStyle(fontSize: 22)),
+                      ],
+                    ),
+                    Text(AppStrings.tr('home_tagline', lang),
+                        style: AppTextStyles.bodySmall(
+                            color: AppColors.white.withOpacity(0.75))),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
+              const _LanguageToggle(),
+              const SizedBox(width: 8),
               Container(
                 width: 40,
                 height: 40,
@@ -146,6 +160,49 @@ class _HomeAppBar extends ConsumerWidget {
   }
 }
 
+/// EN / HI pill toggle shown next to the notification bell.
+class _LanguageToggle extends ConsumerWidget {
+  const _LanguageToggle();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
+    return GestureDetector(
+      onTap: () => ref.read(langProvider.notifier).toggle(),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: AppColors.cardBg.withOpacity(0.85),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _langChip('EN', lang == 'en'),
+            _langChip('हि', lang == 'hi'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _langChip(String label, bool active) => AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: active ? AppColors.cosmicGold : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.labelMedium(
+              color: active ? AppColors.cosmicBase : AppColors.cosmicTextMid),
+        ),
+      );
+}
+
 Widget _SectionHeader(String title) => Text(
       title,
       style: AppTextStyles.sectionCaps(),
@@ -159,6 +216,7 @@ class _CosmicWeatherCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final todayAsync = ref.watch(todayProvider);
+    final lang = ref.watch(langProvider);
 
     return Container(
       width: double.infinity,
@@ -183,7 +241,7 @@ class _CosmicWeatherCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "TODAY'S COSMIC WEATHER",
+                  AppStrings.tr('todays_cosmic_weather', lang),
                   style: AppTextStyles.sectionCaps(
                       color: AppColors.cosmicGoldLight),
                 ),
@@ -196,7 +254,7 @@ class _CosmicWeatherCard extends ConsumerWidget {
                               fontSize: 24,
                               color: AppColors.cosmicGoldLight)),
                       const SizedBox(width: 8),
-                      Text('Loading cosmic weather...',
+                      Text(AppStrings.tr('loading_weather', lang),
                           style: AppTextStyles.headingMedium(
                               color: AppColors.white)),
                     ],
@@ -238,7 +296,7 @@ class _CosmicWeatherCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: () => context.go('/explore-today'),
+                  onTap: () => context.push('/explore-today'),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 7),
@@ -249,7 +307,7 @@ class _CosmicWeatherCard extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('EXPLORE TODAY',
+                        Text(AppStrings.tr('explore_today', lang),
                             style: AppTextStyles.sectionCaps(
                                 color: AppColors.cosmicTextDark)),
                         const SizedBox(width: 5),
@@ -312,40 +370,25 @@ class _WeatherCardBg extends CustomPainter {
 // ── Quick Access ──────────────────────────────────────────────────────────────
 
 const _quickItems = [
-  (
-    icon: Icons.calendar_month_outlined,
-    label: 'Daily\nHoroscope',
-    route: '/horoscope'
-  ),
-  (
-    icon: Icons.radio_button_unchecked,
-    label: 'Birth\nChart',
-    route: '/birth-chart'
-  ),
-  (
-    icon: Icons.auto_awesome_outlined,
-    label: 'AI Chat\nAstrologer',
-    route: '/chat'
-  ),
-  (
-    icon: Icons.favorite_border,
-    label: 'Compatibility',
-    route: '/compatibility'
-  ),
+  (icon: Icons.calendar_month_outlined, key: 'qa_daily_horoscope', route: '/horoscope'),
+  (icon: Icons.radio_button_unchecked,  key: 'qa_birth_chart',     route: '/birth-chart'),
+  (icon: Icons.auto_awesome_outlined,   key: 'qa_ai_chat',         route: '/chat'),
+  (icon: Icons.favorite_border,         key: 'qa_compatibility',   route: '/compatibility'),
 ];
 
-class _QuickAccessGrid extends StatelessWidget {
+class _QuickAccessGrid extends ConsumerWidget {
   const _QuickAccessGrid();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return Row(
       children: _quickItems.map((item) {
         return Expanded(
           child: Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: () => context.go(item.route),
+              onTap: () => context.push(item.route),
               child: CosmicCard(
                 padding: const EdgeInsets.symmetric(
                     vertical: 14, horizontal: 6),
@@ -355,7 +398,7 @@ class _QuickAccessGrid extends StatelessWidget {
                         color: AppColors.cosmicTextDark, size: 24),
                     const SizedBox(height: 6),
                     Text(
-                      item.label,
+                      AppStrings.tr(item.key, lang),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodySmall(
                           color: AppColors.cosmicTextDark),
@@ -378,13 +421,14 @@ class _LifeScoresRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     final lifeScores = ref.watch(todayProvider).valueOrNull?.lifeScores;
 
     final scores = [
-      (label: 'Love',   value: lifeScores?.love   ?? 0.72, color: AppColors.scoreLove),
-      (label: 'Career', value: lifeScores?.career  ?? 0.85, color: AppColors.scoreCareer),
-      (label: 'Health', value: lifeScores?.health  ?? 0.68, color: AppColors.scoreHealth),
-      (label: 'Money',  value: lifeScores?.money   ?? 0.75, color: AppColors.scoreMoney),
+      (label: AppStrings.tr('score_love', lang),   value: lifeScores?.love   ?? 0.72, color: AppColors.scoreLove),
+      (label: AppStrings.tr('score_career', lang), value: lifeScores?.career ?? 0.85, color: AppColors.scoreCareer),
+      (label: AppStrings.tr('score_health', lang), value: lifeScores?.health ?? 0.68, color: AppColors.scoreHealth),
+      (label: AppStrings.tr('score_money', lang),  value: lifeScores?.money  ?? 0.75, color: AppColors.scoreMoney),
     ];
 
     return Row(
@@ -597,6 +641,7 @@ class _WhatsAppCardState extends ConsumerState<_WhatsAppCard> {
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).valueOrNull;
     final enabled = user?.whatsappEnabled ?? false;
+    final lang = ref.watch(langProvider);
 
     return CosmicCard(
       padding: const EdgeInsets.all(16),
@@ -622,11 +667,11 @@ class _WhatsAppCardState extends ConsumerState<_WhatsAppCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Daily Horoscope on WhatsApp',
+                    Text(AppStrings.tr('whatsapp_card_title', lang),
                         style: AppTextStyles.labelLarge()),
                     const SizedBox(height: 2),
                     Text(
-                        'Get your personalised reading every morning',
+                        AppStrings.tr('whatsapp_card_subtitle', lang),
                         style: AppTextStyles.bodySmall()),
                   ],
                 ),
@@ -646,7 +691,7 @@ class _WhatsAppCardState extends ConsumerState<_WhatsAppCard> {
           ),
           if (enabled) ...[
             const SizedBox(height: 14),
-            Text('Delivery Time',
+            Text(AppStrings.tr('delivery_time', lang),
                 style: AppTextStyles.sectionCaps(
                     color: AppColors.cosmicGold)),
             const SizedBox(height: 8),

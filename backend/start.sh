@@ -4,11 +4,10 @@ set -e
 # Run DB migrations on every startup (safe — skips already-applied)
 alembic upgrade head
 
-# Start Celery worker in background
-celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2 &
-
-# Start Celery beat in background
-celery -A app.tasks.celery_app beat --loglevel=info &
+# NOTE: the Celery worker and beat scheduler run as their own dedicated
+# services (see render.yaml / docker-compose.yml). Do NOT start them here —
+# doing so spawns a SECOND beat scheduler, which fires every scheduled job
+# twice (double OpenAI spend, duplicate WhatsApp sends).
 
 # Start FastAPI in foreground (keeps container alive)
 exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}

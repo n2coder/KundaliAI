@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/i18n/app_strings.dart';
+import '../../../core/i18n/lang_provider.dart';
 import '../../../core/models/chat_model.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_colors.dart';
@@ -89,8 +91,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       if (mounted) {
         setState(() => _sending = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to send. Please try again.'),
+          SnackBar(
+            content: Text(
+                AppStrings.tr('send_failed', ref.read(langProvider))),
             backgroundColor: AppColors.error,
           ),
         );
@@ -112,6 +115,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(langProvider);
     return CosmicScaffold(
       resizeToAvoidBottomInset: true,
       child: SafeArea(
@@ -123,18 +127,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new,
-                        color: AppColors.cosmicTextDark, size: 18),
+                        color: AppColors.white, size: 18),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   Expanded(
                     child: Center(
-                      child: Text('AI Astrologer',
-                          style: AppTextStyles.headingMedium()),
+                      child: Text(AppStrings.tr('ai_astrologer', lang),
+                          style: AppTextStyles.headingMedium(
+                              color: AppColors.white)),
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.more_horiz,
-                        color: AppColors.cosmicTextDark),
+                        color: AppColors.white),
                     onPressed: () {},
                   ),
                 ],
@@ -172,7 +177,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       child: TextField(
                         controller: _controller,
                         decoration: InputDecoration(
-                          hintText: 'Ask me anything...',
+                          hintText: AppStrings.tr('ask_anything', lang),
                           hintStyle: AppTextStyles.bodyMedium(
                               color: AppColors.cosmicTextLight),
                           border: InputBorder.none,
@@ -260,11 +265,12 @@ class _ChatBubble extends StatelessWidget {
   }
 }
 
-class _TypingIndicator extends StatelessWidget {
+class _TypingIndicator extends ConsumerWidget {
   const _TypingIndicator();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(langProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Align(
@@ -293,7 +299,7 @@ class _TypingIndicator extends StatelessWidget {
                     color: AppColors.cosmicGold),
               ),
               const SizedBox(width: 8),
-              Text('Consulting the stars...',
+              Text(AppStrings.tr('consulting_stars', lang),
                   style: AppTextStyles.bodySmall(
                       color: AppColors.cosmicTextLight)),
             ],
