@@ -14,7 +14,13 @@ export default function Hero() {
         }}
       />
 
-      <div className="mx-auto grid max-w-6xl items-center gap-16 px-6 md:grid-cols-2">
+      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center">
+        <div className="spin-slow h-[420px] w-[420px] overflow-hidden rounded-full opacity-30 md:h-[620px] md:w-[620px]">
+          <img src="/zodiac_wheel.png" alt="" className="h-full w-full object-cover" />
+        </div>
+      </div>
+
+      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-16 px-6 md:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,11 +74,6 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.15 }}
           className="relative mx-auto w-full max-w-[300px]"
         >
-          <img
-            src="/zodiac_wheel.png"
-            alt=""
-            className="spin-slow absolute -top-16 left-1/2 w-56 -translate-x-1/2 opacity-50 md:-top-20 md:w-64"
-          />
           <PhoneMockup src="/screenshots/splash.jpeg" alt="Kundali AI app splash screen" className="float-slow" />
         </motion.div>
       </div>
